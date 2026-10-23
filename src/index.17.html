@@ -1,0 +1,237 @@
+   '<div class="card"><div class="row"><span class="eyebrow">Palier de patrimoine</span><span class="badge">'+(ti.cur?ti.cur[1]+(dsc.score>=70?' · validé':' · non validé'):'Aucun')+'</span></div>'+(nxt?'<div class="note">Prochain : <strong>'+nxt[1]+'</strong> à '+eur0(nxt[0])+' de gains nets.</div><div class="bar"><i style="width:'+prog+'%"></i></div>':'')+'<div class="note">Aperçu sur le fictif. Dans l’app, les paliers se valident sur ton portefeuille réel connecté.</div></div>'+
+   '<div class="card"><div class="eyebrow">Projection IA · simulation</div><div class="field"><label for="monthly">Versement mensuel : <strong class="num" id="mval">'+eur0(m)+'</strong></label><input type="range" id="monthly" min="0" max="1000" step="50" value="'+m+'"></div>'+
+   '<div class="grid3" id="projbox">'+[['Prudent',.03],['Central',.06],['Optimiste',.08]].map(function(s){return '<div class="mini"><div class="n">'+s[0]+' · '+(s[1]*100)+' %</div><div class="v num">'+eur0(proj(s[1],10))+'</div><div class="note">à 10 ans</div></div>'}).join('')+'</div><div class="note">Hypothèses de rendement annuel, pas une promesse ni un conseil.</div></div>')+
+   '</div>';
+}
+function screenProfil(){
+  var dsc=discipline(),ti=tierInfo(gains());
+  var sides=SIDES.map(function(s){return '<div class="item"><div class="grow"><div class="t">'+s[1]+'</div><div class="s">'+s[2]+'</div></div>'+(S.skills[s[0]]?'<span class="badge acc">Allumé</span>':'<span class="badge">À faire</span>')+'</div>'}).join('');
+  var th=THEMES.map(function(t){return '<button class="th" data-theme="'+t.id+'" aria-pressed="'+(S.theme===t.id)+'"><span class="sw" style="background:'+t.bg+';border-color:'+t.bg+'"><i style="width:34px;height:34px;border-radius:17px;background:linear-gradient(135deg,'+t.g1+','+t.g2+')"></i></span>'+t.name+'</button>'}).join('');
+  var pt='regl';
+  var seg='';
+  var head='<div class="screen"><div><div class="eyebrow">Profil</div><h1>Réglages</h1></div>'+
+   '<div class="card">'+accountCard()+'</div>'+
+   seg;
+  if(pt==='regl')return head+
+   '<div class="cta"><span class="dot pm">★</span><div class="grow"><div style="font-size:17px;font-weight:600">Abonnement</div><div class="note">'+esc(planLine())+'</div></div><button class="btn small'+(hasBudgetPlus()?' ghost':'')+'" data-paywall="1">'+(hasBudgetPlus()?'Gérer':'Voir les offres')+'</button></div>'+
+   bizProfile()+'<div class="eyebrow">Thème de l’app</div><div class="card"><div class="themes" role="group" aria-label="Thème">'+th+'</div></div>'+
+   (false?'<div class="eyebrow">Accès complet</div><div class="card"><div class="row"><h3>Mode créateur</h3><button class="chip" data-admin="toggle" aria-pressed="'+(!!S.admin)+'">'+(S.admin?'Activé':'Désactivé')+'</button></div><div class="note">Aucune pause entre les quiz, examen et révision toujours ouverts, et réglages libres pour tester chaque écran.</div>'+(S.admin?
+ '<div class="field"><label for="adRank">Rang</label><select id="adRank" class="search">'+RANKS.map(function(r,i){return '<option value="'+(i+1)+'"'+(S.rank===i+1?' selected':'')+'>Rang '+(i+1)+' · '+r+'</option>'}).join('')+'</select></div>'+
+ '<div class="field"><label for="adLeague">Ligue</label><select id="adLeague" class="search">'+LEAGUES.map(function(l,i){return '<option value="'+i+'"'+(S.lg.league===i?' selected':'')+'>'+l+'</option>'}).join('')+'</select></div>'+
+ '<div class="grid2"><button class="btn small" data-admin="hex">Allumer l’Hexagone</button><button class="btn small" data-admin="lessons">Valider toutes les leçons</button><button class="btn small ghost" data-admin="week">Clore la semaine</button><button class="btn small ghost" data-admin="t212">Réinit. Trading 212</button><button class="btn small ghost" data-admin="onb">Revoir l’accueil</button><button class="btn small ghost" data-admin="free">Tester l’offre Gratuite</button></div>':'')+'</div>':'')+
+   '<div class="card"><h3>Recommencer à zéro</h3><div class="note">Efface ton budget, tes papiers et ton plan sur cet appareil.</div><div id="resetZone"><button class="btn ghost" data-reset="ask">Réinitialiser</button></div></div>'+
+   '<div class="grp">'+[['mentions','Mentions légales'],['cgu','Conditions d’utilisation et de vente'],['confid','Confidentialité et données'],['avert','Risques et limites']].map(function(x){return '<button class="lrow" data-legal="'+x[0]+'"><span style="flex:1" class="t">'+x[1]+'</span><span class="muted">›</span></button>'}).join('')+'</div>'+
+   '<p class="note">Finly est un outil pédagogique de gestion d’argent. Rien ici n’est un conseil en investissement.</p></div>';
+  return head+
+   '<div class="list"><div class="item"><div class="grow"><div class="t">Savoir</div></div><span style="font-weight:700;color:var(--acc)">'+rankLine()+'</span></div><div class="item"><div class="grow"><div class="t">Leçons validées</div></div><span class="num" style="font-weight:700">'+LORDER.filter(function(id){return S.passed[id]}).length+' / '+LORDER.length+'</span></div><div class="item"><div class="grow"><div class="t">Série</div></div><span class="num" style="font-weight:700">'+(S.lg&&S.lg.streak||0)+' jour'+((S.lg&&S.lg.streak||0)>1?'s':'')+'</span></div></div>'+
+   '<div class="eyebrow">Ta maîtrise</div><div class="card" style="align-items:center">'+hexSvg(170)+'</div>'+strengthsCard()+badgesCard()+
+   more('hex','Les 6 côtés de l’Hexagone','Ce qu’il faut faire pour allumer chaque compétence','<div class="list">'+sides+'</div>')+'</div>';
+}
+function render(){
+  ensureWeek(); checkSkills(); save(); renderTabs();
+  var v=$('#view');
+  if(tab==='marches')tab='accueil';if(S.ptab==='ligue')S.ptab='prog';
+  var bb=bud(),cc=bCalc();if(tab==='budget'||['apprendre','actus','portefeuille','marches'].indexOf(tab)>=0)tab='accueil';
+  if(tab==='accueil'&&bb.btab&&bb.btab!=='home'&&bb.btab!=='plan'){var mp={papiers:'papiers',depenses:'depenses',suivi:'depenses',dettes:'dettes',objectifs:'epargne'}[bb.btab];if(mp){FX.dep=bb.btab==='suivi'?'suivi':'budget';tab=mp;bb.btab='home';renderTabs()}}
+  v.innerHTML = tab==='depenses'?fxDepenses(cc):tab==='papiers'?fxPage('Papiers','Factures, amendes, mises en demeure',bPapersPage()):tab==='dettes'?fxPage('Dettes','Crédits, retards et plan de sortie',bDettes(cc)):tab==='epargne'?fxEpargne(cc):tab==='profil'?screenProfil():screenBudget();
+}
+function softRefresh(){
+  // light refresh of live numbers without rebuilding inputs
+  if(tab==='marches'&&S.mview==='sim'){var ml=$('[data-live="mlist"]');if(ml){var tmp=document.createElement('div');tmp.innerHTML=screenMarches();ml.innerHTML=tmp.querySelector('[data-live="mlist"]').innerHTML}}
+  if(tab==='accueil'){var mk=$('[data-live="mk"]');if(mk){var t2=document.createElement('div');t2.innerHTML=screenAccueil();mk.innerHTML=t2.querySelector('[data-live="mk"]').innerHTML;$('[data-live="total"]').innerHTML=t2.querySelector('[data-live="total"]').innerHTML;$('[data-live="gain"]').outerHTML=t2.querySelector('[data-live="gain"]').outerHTML}}
+  if(tab==='portefeuille'&&S.pview==='fictif'&&Object.keys(S.pos).length&&!document.activeElement.matches('input')){var y=window.scrollY;render();window.scrollTo(0,y)}
+}
+
+/* ---------- asset sheet: detail, why, buy, sell ---------- */
+/* ---------- order engine: real broker fee grids (sources checked 17/10/2026) ---------- */
+var BROKERS={
+ t212:{n:'Trading 212',fx:.0015,c:function(amt,m,side){return 0},d:'0 € de courtage · change 0,15 % hors euro'},
+ tr:{n:'Trade Republic',fx:0,c:function(amt,m,side){return 1},d:'1 € par ordre (hors plan d’investissement) · conversion incluse dans le prix'},
+ degiro:{n:'DEGIRO',fx:.0025,c:function(amt,m,side){return m.etf?1:((m.pc==='p'||m.pc==='US')?2:5.9)},d:'2 € Paris et États-Unis · 1 € ETF de la sélection · ~5,90 € autres places · change 0,25 %'},
+ bourso:{n:'BoursoBank Découverte',fx:0,c:function(amt,m,side){return amt<=500?1.99:Math.round(amt*.6)/100},d:'1,99 € jusqu’à 500 €, puis 0,60 % · frais de change non inclus ici'}
+};
+if(!S.broker)S.broker='t212';
+if(!S.orders)S.orders=[];
+if(!S.fees)S.fees={brok:0,fx:0,ttf:0,spread:0};
+function meta(sym){var a=BY[sym]||{};var sr=S.simRef[sym],r=RBY[sym];
+  if(a.real){var cur=(r&&r.cur)||(sr&&sr.c)||'EUR',isin=(r&&r.isin)||(sr&&sr.i)||'',pc=(r&&r.pc)||(sr&&sr.pc)||'',etf=a.cat==='ETF';
+    return {etf:etf,pc:pc,cur:cur,isin:isin,fr:!etf&&isin.indexOf('FR')===0,spread:etf?.0005:.001}}
+  return {etf:a.cat==='ETF',pc:'p',cur:'EUR',isin:'',fr:false,spread:a.cat==='Actions'?.0015:.0005}}
+function quote(sym,side,q,type,limit,ttfOn){
+  var a=BY[sym],m=meta(sym),B=BROKERS[S.broker];
+  var px=type==='limit'?limit:a.p*(side==='achat'?1+m.spread/2:1-m.spread/2);
+  var amt=q*px,brok=q>0?B.c(amt,m,side):0,fx=m.cur!=='EUR'?amt*B.fx:0,ttf=(side==='achat'&&ttfOn&&m.fr)?amt*.004:0,spr=type==='limit'?0:q*a.p*m.spread/2;
+  var total=side==='achat'?amt+brok+fx+ttf:amt-brok-fx;
+  return {px:px,amt:amt,brok:brok,fx:fx,ttf:ttf,spr:spr,total:total,m:m};
+}
+function execOrder(o,silent){
+  var a=BY[o.sym];if(!a)return false;var Q=quote(o.sym,o.side,o.q,o.type==='limit'?'limit':'market',o.type==='limit'?Math.min(o.limit,o.side==='achat'?Math.max(a.p,0):o.limit):0,o.ttf);
+  if(o.type==='limit'){Q=quote(o.sym,o.side,o.q,'limit',o.side==='achat'?Math.min(o.limit,a.p):Math.max(o.limit,a.p),o.ttf)}
+  if(o.side==='achat'){if(Q.total>S.cash+1e-6){if(!silent)toast('Liquidités insuffisantes');return false}
+    var cur=S.pos[o.sym]||{q:0,c:0};cur.c=(cur.q*cur.c+Q.total)/(cur.q+o.q);cur.q+=o.q;S.pos[o.sym]=cur;S.cash-=Q.total}
+  else{var p=S.pos[o.sym];if(!p||p.q<o.q-1e-9){if(!silent)toast('Quantité supérieure à ce que tu détiens');return false}p.q-=o.q;if(p.q<1e-9)delete S.pos[o.sym];S.cash+=Q.total}
+  S.fees.brok+=Q.brok;S.fees.fx+=Q.fx;S.fees.ttf+=Q.ttf;S.fees.spread+=Q.spr;
+  var tr={side:o.side,sym:o.sym,q:o.q,p:Q.px,t:now(),fees:Q.brok+Q.fx+Q.ttf,broker:S.broker};if(o.thesis)tr.thesis=o.thesis;S.trades.push(tr);
+  return Q;
+}
+function processOrders(){
+  if(!S.orders.length)return;var done=[];
+  S.orders.forEach(function(o,i){var a=BY[o.sym];if(!a)return;if((o.side==='achat'&&a.p<=o.limit)||(o.side==='vente'&&a.p>=o.limit)){var r=execOrder(o,true);if(r){done.push(i);toast('Ordre exécuté : '+(o.side==='achat'?'achat':'vente')+' de '+nf2.format(o.q)+' '+a.name)}}});
+  if(done.length){S.orders=S.orders.filter(function(o,i){return done.indexOf(i)<0});checkSkills();save()}
+}
+var tk={side:'achat',type:'market'};
+function renderAssetSheet(sym,live){
+  var a=BY[sym],c=chg(a),p=S.pos[sym],m=meta(sym);
+  if(live){var pe=$('#apx'),ce=$('#achg'),sp=$('#aspark');if(!pe)return;pe.textContent=eur(a.p);ce.textContent=pct(c)+' aujourd’hui';ce.className='num '+(c>=0?'up':'down');sp.innerHTML=spark(a.hist,320,110,'var(--acc)');if(tk.type==='market')updTicket();return}
+  openAsset=sym;tk={side:'achat',type:'market'};
+  var brokOpts=Object.keys(BROKERS).map(function(k){return '<option value="'+k+'"'+(S.broker===k?' selected':'')+'>'+BROKERS[k].n+'</option>'}).join('');
+  sheet('<div class="row"><div style="min-width:0"><div class="eyebrow">'+esc(a.cat)+(m.cur!=='EUR'?' · cotée en '+esc(m.cur):'')+'</div><h2>'+esc(a.name)+'</h2>'+(m.isin?'<div class="note">ISIN '+esc(m.isin)+'</div>':'')+'</div><button class="btn ghost small" data-close="1">Fermer</button></div>'+
+   '<div><div class="big num" id="apx">'+eur(a.p)+'</div><div class="num '+(c>=0?'up':'down')+'" id="achg" style="font-weight:600">'+pct(c)+' aujourd’hui</div>'+(a.real?'<div class="note">Cours d’entraînement : ton dernier cours réel saisi, puis variations simulées.</div>':'<div class="note">Actif d’entraînement aux cours simulés.</div>')+'</div>'+
+   '<div id="aspark">'+spark(a.hist,320,110,'var(--acc)')+'</div>'+
+   (a.real?'<form class="card" id="syncForm"><div class="field"><label for="syncPx">Recaler sur le cours réel (en €)</label><input type="number" id="syncPx" min="0" step="any" inputmode="decimal" placeholder="Cours affiché par ton courtier"></div><button class="btn small ghost" type="submit">Mettre à jour le cours</button></form>':'')+
+   '<div class="card"><div class="row"><h3>Pourquoi ça bouge ?</h3><button class="btn small" id="whyBtn">Pourquoi ?</button></div><div class="ai" id="whyOut" hidden></div></div>'+
+   '<form class="card" id="ticket"><div class="eyebrow">Passer un ordre</div>'+
+   '<div class="seg" role="group" aria-label="Sens"><button type="button" data-side="achat" aria-pressed="true">Acheter</button><button type="button" data-side="vente" aria-pressed="false"'+(p?'':' disabled')+'>Vendre</button></div>'+
+   '<div class="seg" role="group" aria-label="Type d’ordre"><button type="button" data-otype="market" aria-pressed="true">Au marché</button><button type="button" data-otype="limit" aria-pressed="false">À cours limité</button></div>'+
+   '<div class="field"><label for="brokerSel">Courtier simulé</label><select id="brokerSel" class="search">'+brokOpts+'</select><div class="note" id="brokNote">'+BROKERS[S.broker].d+'</div></div>'+
+   '<div class="field"><label for="qty">Quantité</label><input type="number" id="qty" min="0" step="any" value="1" inputmode="decimal"></div>'+
+   '<div class="field" id="limWrap" hidden><label for="lim">Prix limite (€)</label><input type="number" id="lim" min="0" step="any" inputmode="decimal" value="'+a.p.toFixed(2)+'"></div>'+
+   (m.fr?'<label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.4"><input type="checkbox" id="ttfOn" checked style="width:20px;height:20px;flex:none;accent-color:var(--acc)"> Taxe sur les transactions financières (0,4 % à l’achat), due si la société française dépasse 1 milliard d’euros de capitalisation.</label>':'')+
+   '<div class="field" id="thWrap"><label for="thesis">Pourquoi j’achète ? Ta raison en une phrase</label><textarea id="thesis" rows="2" maxlength="200" placeholder="ex. Je veux une exposition mondiale à bas coût pour 15 ans" style="width:100%;box-sizing:border-box;border-radius:12px;border:0;background:var(--fill);color:var(--text);padding:10px 12px;font:inherit;resize:vertical"></textarea><span class="note">Ton journal te la fera relire dans 3 mois.</span></div>'+
+   '<div id="qbox" class="note"></div>'+
+   '<button class="btn" type="submit" id="sendOrder">Valider l’ordre</button>'+(p?'<div class="note num">Tu détiens '+nf2.format(p.q)+' parts, prix de revient frais inclus : '+eur(p.c)+'.</div>':'')+'</form>'+
+   '<p class="note">Argent fictif : aucun ordre réel n’est passé. Frais selon les grilles publiques des courtiers, à vérifier sur leurs sites.</p>');
+  updTicket();
+  $('#ticket').addEventListener('click',function(e){var b=e.target.closest('[data-side],[data-otype]');if(!b||b.disabled)return;if(b.dataset.side){tk.side=b.dataset.side;document.querySelectorAll('[data-side]').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))})}if(b.dataset.otype){tk.type=b.dataset.otype;document.querySelectorAll('[data-otype]').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});$('#limWrap').hidden=tk.type!=='limit'}var tw=$('#thWrap');if(tw)tw.hidden=tk.side!=='achat';updTicket()});
+  ['qty','lim','ttfOn'].forEach(function(id){var el=$('#'+id);if(el){el.addEventListener('input',updTicket);el.addEventListener('change',updTicket)}});
+  $('#brokerSel').addEventListener('change',function(e){S.broker=e.target.value;save();$('#brokNote').textContent=BROKERS[S.broker].d;updTicket()});
+  var sf=$('#syncForm');if(sf)sf.addEventListener('submit',function(e){e.preventDefault();var v=parseFloat($('#syncPx').value);if(!(v>0)){toast('Indique un cours supérieur à 0');return}a.p=v;a.hist.push(v);if(S.simRef[sym])S.simRef[sym].p=v;save();renderAssetSheet(sym,true);$('#syncPx').value='';toast('Cours recalé sur '+eur(v))});
+  $('#whyBtn').addEventListener('click',function(){var o=$('#whyOut');o.hidden=false;var cc=chg(a);
+    askAI('Tu es l’assistant pédagogique de l’application Finly, en français, pour des débutants. Dans l’entraînement, l’actif « '+a.name+' » (catégorie : '+a.cat+') affiche une variation de '+nf2.format(cc)+' % sur la séance d’entraînement, en partie simulée. Réponds en 4 phrases maximum : 1) précise que cette variation est en partie simulée, 2) explique les causes qui font typiquement monter ou baisser ce type d’actif, 3) cite un indicateur à surveiller. Pas de conseil d’achat ou de vente, pas de titres, pas de listes.',o,
+      'Cette variation est en partie simulée. Dans l’app, l’IA expliquerait ici la cause réelle à partir des dépêches vérifiées du jour.')});
+  $('#ticket').addEventListener('submit',function(e){e.preventDefault();var q=parseFloat($('#qty').value);if(!(q>0)){toast('Indique une quantité supérieure à 0');return}
+    var ttf=!!($('#ttfOn')&&$('#ttfOn').checked),th=(($('#thesis')||{}).value||'').trim();if(tk.side==='achat'&&th.length<10){toast('Écris en une phrase pourquoi tu achètes');var te=$('#thesis');if(te)te.focus();return}if(tk.side!=='achat')th='';
+    if(tk.type==='limit'){var L=parseFloat($('#lim').value);if(!(L>0)){toast('Indique un prix limite');return}
+      if((tk.side==='achat'&&a.p<=L)||(tk.side==='vente'&&a.p>=L)){var r0=execOrder({sym:sym,side:tk.side,q:q,type:'limit',limit:L,ttf:ttf,thesis:th});if(!r0)return;checkSkills();save();closeSheet();render();toast('Ordre limite exécuté immédiatement à '+eur(r0.px));return}
+      S.orders.push({sym:sym,side:tk.side,q:q,type:'limit',limit:L,ttf:ttf,t:now(),thesis:th});save();closeSheet();render();toast('Ordre à cours limité en attente à '+eur(L));return}
+    var had=S.skills.pratiquer,r=execOrder({sym:sym,side:tk.side,q:q,type:'market',ttf:ttf,thesis:th});if(!r)return;checkSkills();save();closeSheet();render();
+    toast((tk.side==='achat'?'Achat':'Vente')+' exécuté · frais '+eur(r.brok+r.fx+r.ttf)+(had?'':' · côté « Pratiquer » allumé'))});
+}
+function updTicket(){var a=BY[openAsset],box=$('#qbox');if(!a||!box)return;var q=parseFloat(($('#qty')||{}).value)||0,L=parseFloat(($('#lim')||{}).value)||0,ttf=!!($('#ttfOn')&&$('#ttfOn').checked);
+  var Q=quote(openAsset,tk.side,q,tk.type,L,ttf);
+  var line=function(l,v,strong){return '<div class="row"'+(strong?' style="font-weight:700;color:var(--text);font-size:15px"':'')+'><span>'+l+'</span><span class="num">'+v+'</span></div>'};
+  box.innerHTML=line('Prix d’exécution '+(tk.type==='limit'?'(limite)':'estimé'),eur(Q.px))+line('Montant',eur(Q.amt))+line('Courtage · '+BROKERS[S.broker].n,eur(Q.brok))+(Q.m.cur!=='EUR'?line('Frais de change ('+Q.m.cur+')',eur(Q.fx)):'')+(Q.m.fr&&tk.side==='achat'?line('Taxe sur les transactions financières',eur(Q.ttf)):'')+(tk.type==='market'?line('Écart achat-vente estimé (inclus dans le prix)',eur(Q.spr)):'')+
+   line(tk.side==='achat'?'Total débité':'Total crédité',eur(Q.total),true)+line('Liquidités disponibles',eur(S.cash))+(q>0&&Q.amt>0?'<div class="row"><span>Coût de l’ordre</span><span class="num">'+nf2.format((Q.brok+Q.fx+Q.ttf+Q.spr)/Q.amt*100)+' % du montant</span></div>':'');
+}
+
+/* ---------- real securities: detail, add, edit, import, connect ---------- */
+function realSheet(key,idx){
+  var r=RBY[key], l=(idx!=null)?S.real[idx]:null; if(!r&&l)r={key:l.key,t:l.t||'?',name:l.name,place:'',sector:'Ligne importée',zone:''};
+  sheet('<div class="row"><div class="tk" style="width:56px;height:48px;font-size:12px">'+esc(r.t)+'</div><div class="grow" style="flex:1;min-width:0"><div class="eyebrow">'+esc(r.sector)+(r.place?' · '+esc(r.place):'')+'</div><h2>'+esc(r.name)+'</h2>'+(r.isin?'<div class="note">ISIN '+esc(r.isin)+'</div>':'')+'</div><button class="btn ghost small" data-close="1">Fermer</button></div>'+
+   (r.place?'<div class="card"><div class="row"><h3>Présentation par l’IA</h3><button class="btn small" id="presBtn">Découvrir</button></div><div class="ai" id="presOut" hidden></div></div>':'')+
+   '<form class="card" id="lineForm"><h3>'+(l?'Modifier ma ligne':'Ajouter à mon vrai portefeuille')+'</h3>'+
+   '<div class="field"><label for="lq">Quantité détenue</label><input type="number" id="lq" min="0" step="any" inputmode="decimal" value="'+(l?l.q:'')+'" required></div>'+
+   '<div class="field"><label for="lp">Prix de revient unitaire (PRU), en €</label><input type="number" id="lp" min="0" step="any" inputmode="decimal" value="'+(l?l.pru:'')+'" required></div>'+
+   '<div class="field"><label for="lc">Cours actuel, en € (facultatif)</label><input type="number" id="lc" min="0" step="any" inputmode="decimal" value="'+(l&&l.cur?l.cur:'')+'"></div>'+
+   '<div class="note">Le cours actuel sera mis à jour automatiquement dans l’app connectée. Ici, saisis-le depuis ton courtier.</div>'+
+   '<button class="btn" type="submit">'+(l?'Enregistrer':'Ajouter la ligne')+'</button>'+(l?'<button class="btn ghost" type="button" id="delLine">Supprimer la ligne</button>':'')+'</form>');
+  var pb=$('#presBtn'); if(pb)pb.addEventListener('click',function(){var o=$('#presOut');o.hidden=false;
+    askAI('Tu es l’assistant pédagogique de l’application Finly. En français simple, présente l’entreprise ou le fonds « '+r.name+' » (ticker '+r.t+', cotation '+r.place+', '+(r.etf?'ETF':'action')+(r.isin?', ISIN '+r.isin:'')+') en 5 phrases maximum : son activité, comment elle gagne de l’argent, deux risques à connaître. Précise que tes informations peuvent dater et qu’il faut vérifier les chiffres récents. Aucun conseil d’achat ou de vente, pas de liste.',o,
+      'L’IA n’est pas disponible dans cette vue. Dans l’app, elle présenterait ici l’activité de '+r.name+', son modèle économique et ses principaux risques.')});
+  $('#lineForm').addEventListener('submit',function(e){e.preventDefault();var q=parseFloat($('#lq').value),p=parseFloat($('#lp').value),c=parseFloat($('#lc').value)||0;
+    if(!(q>0)||!(p>=0)){toast('Indique une quantité et un prix de revient');return}
+    if(l){l.q=q;l.pru=p;l.cur=c}else{var ex=S.real.filter(function(x){return x.key===r.key})[0];if(ex){ex.c0=ex.q*ex.pru+q*p;ex.q+=q;ex.pru=ex.c0/ex.q;delete ex.c0;if(c)ex.cur=c}else S.real.push({key:r.key,t:r.t,name:r.name,q:q,pru:p,cur:c})}
+    S.pview='reel';save();closeSheet();tab='portefeuille';render();toast(l?'Ligne mise à jour':r.name+' ajouté à ton portefeuille réel')});
+  var dl=$('#delLine'); if(dl)dl.addEventListener('click',function(){S.real.splice(idx,1);save();closeSheet();render();toast('Ligne supprimée')});
+}
+function pickRealSheet(){
+  sheet('<div class="row"><h2>Ajouter une ligne</h2><button class="btn ghost small" data-close="1">Fermer</button></div><input class="search" id="psearch" type="search" placeholder="Nom ou ticker : LVMH, AAPL, CW8…" autocomplete="off"><div class="list" id="plist"></div>');
+  var draw=function(){if(!realLoaded){$('#plist').innerHTML='<div class="item"><div class="grow"><div class="t">Chargement du catalogue…</div></div></div>';return}var L=searchReal($('#psearch').value,'Tout',40).list;
+    $('#plist').innerHTML=L.map(realRow).join('')||'<div class="item"><div class="grow"><div class="t">Aucun résultat</div></div></div>'};
+  $('#psearch').addEventListener('input',draw);draw();
+}
+function connectSheet(){
+  sheet('<div class="row"><h2>Connecter mon courtier</h2><button class="btn ghost small" data-close="1">Fermer</button></div>'+
+   '<div class="card"><h3>Comment ça marchera</h3><div class="note">1. Tu choisis ta banque ou ton courtier dans la liste.</div><div class="note">2. Tu te connectes chez eux, via un agrégateur agréé, en lecture seule : Finly ne peut jamais passer d’ordre ni déplacer d’argent.</div><div class="note">3. Tes lignes, quantités et prix de revient se synchronisent chaque jour, et tes paliers se calculent tout seuls.</div></div>'+
+   '<div class="card"><h3>Enveloppes prises en charge</h3><div class="note">PEA, PEA-PME, compte-titres, assurance-vie, PER.</div></div>'+
+   '<div class="card"><h3>En attendant</h3><div class="note">Exporte le relevé de ton portefeuille en CSV depuis ton courtier, puis utilise « Importer un relevé ». Ou ajoute tes lignes une par une depuis le catalogue.</div></div>'+
+   '<button class="btn" data-close="1">Compris</button>');
+}
+/* ---------- Trading 212 connection: tutorial + key entry (test version: the key is checked for shape only, never stored) ---------- */
+var T212_STEPS=[
+ ['Ouvre Trading 212','Dans l’application Trading 212, touche le menu (les trois traits en bas à droite), puis <strong>Réglages</strong>.','1/5'],
+ ['Va dans « API »','Fais défiler jusqu’à <strong>API</strong>, puis touche <strong>Générer une clé API</strong>. Donne-lui un nom, par exemple « Finly ».','2/5'],
+ ['Coche seulement la lecture','Active <strong>Account data</strong>, <strong>Portfolio</strong> et <strong>History</strong>. Ne coche jamais les permissions qui passent des ordres : Finly n’en a pas besoin.','3/5'],
+ ['Copie tes deux codes','Trading 212 affiche l\'<strong>ID de la clé</strong> et la <strong>clé secrète</strong>. Le secret n’est visible qu’une seule fois : utilise le bouton copier à côté de chaque code.','4/5'],
+ ['Colle-les dans Finly','À l’étape suivante, colle les deux codes. Tu pourras révoquer l’accès à tout moment, ici ou dans Trading 212.','5/5']
+];
+function t212Sheet(step){
+  step=+step||0;
+  if(step<T212_STEPS.length){var st=T212_STEPS[step];
+    sheet('<div class="row"><span class="eyebrow">Connecter Trading 212 · étape '+st[2]+'</span><button class="btn ghost small" data-close="1">Fermer</button></div>'+
+     '<div class="bar"><i style="width:'+((step+1)/(T212_STEPS.length+1)*100)+'%"></i></div>'+
+     '<div class="card" style="align-items:center;padding:28px 16px"><div style="width:72px;height:72px;border-radius:36px;background:var(--tile);color:var(--tileon);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700">'+(step+1)+'</div></div>'+
+     '<h2 style="font-size:24px">'+st[0]+'</h2><p style="margin:0;font-size:16px;line-height:1.55">'+st[1]+'</p>'+
+     (step===0?'<div class="card"><div class="note">Pourquoi c’est sûr : la clé ne permet que de <strong>lire</strong> ton compte. Finly ne peut ni acheter, ni vendre, ni retirer d’argent.</div></div>':'')+
+     '<div class="grid2">'+(step>0?'<button class="btn ghost" data-t212="'+(step-1)+'">Retour</button>':'<span></span>')+'<button class="btn" data-t212="'+(step+1)+'">'+(step===T212_STEPS.length-1?'Coller mes codes':'Suivant')+'</button></div>');
+    return;
+  }
+  sheet('<div class="row"><span class="eyebrow">Connecter Trading 212 · dernière étape</span><button class="btn ghost small" data-close="1">Fermer</button></div><div class="bar"><i style="width:100%"></i></div>'+
+   '<form class="card" id="t212Form"><h3>Colle tes codes</h3>'+
+   '<div class="field"><label for="tkId">ID de la clé d’API</label><input type="text" id="tkId" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Colle l’ID ici"></div>'+
+   '<div class="field"><label for="tkSecret">Clé secrète</label><input type="password" id="tkSecret" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Colle le secret ici"></div>'+
+   '<label style="display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.4"><input type="checkbox" id="tkRead" style="width:22px;height:22px;flex:none;accent-color:var(--acc)"> J’ai coché uniquement des permissions de lecture.</label>'+
+   '<button class="btn" type="submit">Connecter</button></form>'+
+   '<div class="note">Version de test : tes codes sont vérifiés sur cet écran puis effacés, jamais enregistrés ni envoyés. Dans l’app finale, ils partiront chiffrés vers le serveur Finly.</div>');
+  $('#t212Form').addEventListener('submit',function(e){e.preventDefault();
+    var id=$('#tkId').value.trim(),sc=$('#tkSecret').value.trim();
+    if(id.length<20||sc.length<20){toast('Vérifie les deux codes : ils semblent incomplets');return}
+    if(/\s/.test(id+sc)){toast('Un espace s’est glissé dans un code');return}
+    if(!$('#tkRead').checked){toast('Confirme que la clé est en lecture seule');return}
+    $('#tkId').value='';$('#tkSecret').value='';
+    S.t212=1;save();
+    sheet('<div class="row"><span class="eyebrow">Trading 212</span><button class="btn ghost small" data-close="1">Fermer</button></div>'+
+     '<div class="card" style="align-items:center;text-align:center"><div style="width:72px;height:72px;border-radius:36px;background:var(--tile);color:var(--tileon);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:700">✓</div><h2>Codes au bon format</h2><div class="note">Dans l’app finale, la synchronisation démarrerait ici : positions, prix de revient, cours actuels et dividendes, mis à jour chaque jour.</div></div>'+
+     '<div class="card"><h3>Voir le résultat</h3><div class="note">Cette version de test ne peut pas appeler Trading 212. Affiche un portefeuille d’exemple pour voir à quoi ressemblera la synchronisation.</div><button class="btn" id="demoSync">Afficher un exemple</button></div>');
+    $('#demoSync').addEventListener('click',demoSync);
+  });
+}
+function findT(t,pc){for(var i=0;i<REAL.length;i++){var r=REAL[i];if(r.t===t&&(!pc||r.pc===pc))return r}return null}
+function demoSync(){
+  if(!realLoaded){toast('Catalogue en cours de chargement, réessaie dans un instant');return}
+  var demo=[['AAPL','US',4,168.2,1.18],['MSFT','US',3,352.4,1.11],['NVDA','US',6,96.5,1.32],['MC','p',2,712,0.92],['TTE','p',15,58.4,1.04]];
+  var n=0;S.real=S.real.filter(function(l){return !l.demo});
+  demo.forEach(function(d){var r=findT(d[0],d[1]);if(!r)return;S.real.push({key:r.key,t:r.t,name:r.name+' (exemple)',q:d[2],pru:d[3],cur:+(d[3]*d[4]).toFixed(2),demo:1});n++});
+  save();closeSheet();S.pview='reel';tab='portefeuille';render();toast(n+' lignes d’exemple synchronisées');
+}
+function importCSV(text){
+  var rows=text.split(/\r?\n/).filter(function(x){return x.trim()});if(rows.length<2){toast('Fichier vide ou illisible');return}
+  var sep=(rows[0].split(';').length>rows[0].split(',').length)?';':',';
+  var split=function(line){var out=[],cur='',q=false;for(var i=0;i<line.length;i++){var ch=line[i];if(ch==='"'){q=!q}else if(ch===sep&&!q){out.push(cur);cur=''}else cur+=ch}out.push(cur);return out.map(function(s){return s.trim()})};
+  var h=split(rows[0]).map(function(x){return x.toLowerCase()});
+  var find=function(re){for(var i=0;i<h.length;i++)if(re.test(h[i]))return i;return -1};
+  var iI=find(/isin/),iT=find(/ticker|symbole|mn[ée]mo|code/),iN=find(/nom|libell|valeur|titre|instrument|name/),iQ=find(/quantit|qt[ée]|nombre|qty/),iP=find(/pru|prix de revient|revient|cost|prix moyen|achat/),iC=find(/cours|dernier|price|prix actuel/);
+  if(iQ<0||(iT<0&&iN<0&&iI<0)){toast('Colonnes introuvables : il faut au moins un nom, un ticker ou un ISIN, et une quantité');return}
+  var num=function(s){return parseFloat(String(s||'').replace(/\s|€/g,'').replace(',','.'))||0};
+  var added=0,unknown=0;
+  rows.slice(1).forEach(function(line){var c=split(line),tk=iT>=0?c[iT]:'',nm=iN>=0?c[iN]:'',q=num(c[iQ]);if(!(q>0))return;
+    var isn=iI>=0?(c[iI]||'').toUpperCase():'';var m=(isn&&REAL.filter(function(r){return r.isin===isn})[0])||REAL.filter(function(r){return tk&&r.t.toLowerCase()===tk.toLowerCase()})[0]||REAL.filter(function(r){return nm&&r.name&&nm.toLowerCase()===r.name.toLowerCase()})[0];
+    if(!m){unknown++;m={key:'x-'+(tk||nm),t:(tk||nm).slice(0,6).toUpperCase(),name:nm||tk}}
+    S.real.push({key:m.key,t:m.t,name:m.name,q:q,pru:iP>=0?num(c[iP]):0,cur:iC>=0?num(c[iC]):0});added++});
+  save();render();toast(added+' ligne'+(added>1?'s':'')+' importée'+(added>1?'s':'')+(unknown?' · '+unknown+' hors catalogue':''));
+}
+document.addEventListener('change',function(e){if(e.target.id==='csvIn'&&e.target.files&&e.target.files[0]){var fr=new FileReader();fr.onload=function(){importCSV(String(fr.result))};fr.readAsText(e.target.files[0]);e.target.value=''}});
+document.addEventListener('input',function(e){if(e.target.id==='tsearch'){tq=e.target.value;var tl=$('#tlist');if(tl){tl.hidden=!tq.trim();tl.innerHTML=trainRows()}return}if(e.target.id==='rsearch'){rq=e.target.value;var rl=$('#rlist');if(rl)rl.innerHTML=realRows()}});
+function updTotal(){updTicket()}
+
+/* ---------- search across all lessons + AI answer ---------- */
+function normTxt(t){return String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/<[^>]+>/g,' ')}
+function searchLessons(q){var w=normTxt(q).split(/[^a-z0-9]+/).filter(function(x){return x.length>2&&['les','des','une','est','que','qui','quoi','comment','pour','dans','avec','cest'].indexOf(x)<0});if(!w.length)return [];
+  return LORDER.map(function(id){var l=LX[id],t=normTxt(l.title),k=normTxt((l.keys||[]).join(' ')),b=normTxt(l.body.join(' ')+' '+(l.deep||[]).join(' ')),sc=0;
+    w.forEach(function(x){if(t.indexOf(x)>=0)sc+=6;if(k.indexOf(x)>=0)sc+=3;if(b.indexOf(x)>=0)sc+=1});return [sc,id]}).filter(function(x){return x[0]>0}).sort(function(a,b){return b[0]-a[0]}).slice(0,3).map(function(x){return x[1]})}
+document.addEventListener('submit',function(e){if(!e.target||e.target.id!=='qaForm')return;e.preventDefault();var q=$('#qaIn').value.trim();if(!q)return;
+  var ids=searchLessons(q),r=$('#qaRes');r.innerHTML=ids.map(function(id){var l=LX[id];return '<button class="item" data-lesson="'+id+'"><div class="grow"><div class="t">'+esc(l.title)+'</div><div class="s">Rang '+l.mod.rank+' · '+esc(l.mod.title)+'</div></div><span class="muted">›</span></button>'}).join('');
+  var ctx=ids.map(function(id){var l=LX[id];return l.title+' : '+(l.keys||[]).join(' ')}).join(' | ');
+  var o=$('#qaOut');o.hidden=false;askAI('Tu es le professeur de l’application Finly (éducation financière, en français). Réponds précisément et pédagogiquement, en 8 phrases maximum, avec un exemple chiffré si utile, sans conseil d’investissement personnalisé et sans renvoyer vers d’autres sites ou cours externes : tout doit être expliqué ici. Si la question concerne un chiffre réglementaire récent, précise qu’il faut le vérifier. Leçons liées dans l’app : '+ctx+'. Question : '+q,o,ids.length?'Les leçons ci-dessus traitent de ta question. Dans l’app, l’IA y répondrait aussi directement.':'Aucune leçon ne correspond exactement. Dans l’app, l’IA répondrait directement à ta question.')});
+
+/* ---------- lessons and quizzes ---------- */
