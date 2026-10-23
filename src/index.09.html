@@ -1,0 +1,200 @@
+ m09l5:[function(){var t=rch([11,30,41,45]),V=rnd(1000,8000,500),v=V*t/100;return pq('m09l5','per','Tranche marginale à '+t+' %, versement de '+eur0(V)+' sur un PER. Économie d’impôt ?',v,[V*PRM.pfu/100,V*PRM.ir/100,V*t/1000],fE0,'Économie ≈ versement × tranche = '+eur0(V)+' × '+t+' % = '+eur0(v)+'.',1)}],
+ m05l1:[function(){var CA=rnd(200,2000,50),m=rch([10,12,15,20,25]),RO=CA*m/100;return pq('m05l1','mop','Chiffre d’affaires '+n0(CA)+' M€, résultat opérationnel '+n0(RO)+' M€. Marge opérationnelle ?',m,[CA/RO,m*2,RO/CA],fP1,n0(RO)+' ÷ '+n0(CA)+' = '+fP1(m)+'.',1)},
+  function(){var RN=rnd(10,200,5),N=rch([5,10,20,25,40,50]),v=RN/N;return pq('m05l1','bpa','Résultat net '+n0(RN)+' M€, '+N+' millions d’actions. Bénéfice par action ?',v,[N/RN,RN*N/100,v*10],fE2,'BPA = '+n0(RN)+' ÷ '+N+' = '+eur(v)+'.',1)}],
+ m05l2:[function(){var D=rnd(100,900,50),T=rnd(20,D-20,10),C=rnd(200,1200,50),v=(D-T)/C*100;return pq('m05l2','gear','Dettes financières '+D+' M€, trésorerie '+T+' M€, capitaux propres '+C+' M€. Gearing ?',v,[D/C*100,(D+T)/C*100,C/(D-T)*100],fP1,'Dette nette = '+D+' − '+T+' = '+(D-T)+' M€. Gearing = '+(D-T)+' ÷ '+C+' = '+fP1(v)+'.',2)}],
+ m05l3:[function(){var F=rnd(60,300,10),K=rnd(10,F-10,10),N=rch([10,20,25,40]),v=(F-K)/N;return pq('m05l3','fcf','Flux d’exploitation '+F+' M€, investissements '+K+' M€, '+N+' millions d’actions. Free cash flow par action ?',v,[F/N,(F+K)/N,K/N],fE2,'FCF = '+F+' − '+K+' = '+(F-K)+' M€ ; ÷ '+N+' = '+eur(v)+'.',2)}],
+ m05l4:[function(){var m=rch([5,8,10,12,15]),r=rch([0.5,0.8,1,1.2]),l=rch([1.5,2,2.5,3]),v=m*r*l;return pq('m05l4','dup','Marge nette '+m+' %, rotation des actifs '+n1(r)+', levier '+n1(l)+'. ROE ?',v,[m*r,m+r+l,m*l],fP1,'ROE = '+m+' % × '+n1(r)+' × '+n1(l)+' = '+fP1(v)+'.',2)},
+  function(){var RN=rnd(10,120,5),CP=rnd(100,800,50),v=RN/CP*100;return pq('m05l4','roe','Résultat net '+RN+' M€, capitaux propres '+CP+' M€. ROE ?',v,[CP/RN,v/2,v*2],fP1,RN+' ÷ '+CP+' = '+fP1(v)+'.',1)}],
+ m05l5:[function(){var E=rnd(100,600,50),k=rch([0.5,1,1.5,2,2.5,3,4]),D=E*k;return pq('m05l5','lev','Dette nette '+n0(D)+' M€, EBITDA '+E+' M€. Ratio dette nette / EBITDA ?',k,[E/D,k*2,k+1],function(x){return n1(x)+' fois'},n0(D)+' ÷ '+E+' = '+n1(k)+'.',1)},
+  function(){var D=rch([200,500,800,1000,2000]),a=rch([1,1.5,2,2.5]),b=a+rch([1,2,3]),v=D*(b-a)/100;return pq('m05l5','ref','Une entreprise refinance '+n0(D)+' M€ de dette de '+n1(a)+' % à '+n1(b)+' %. Surcoût annuel ?',v,[D*b/100,D*a/100,v*10],fMe,n0(D)+' × ('+n1(b)+' − '+n1(a)+') % = '+fMe(v)+'.',2)}],
+ m05l9:[function(){var g=rch([5,8,10,12,15,20,25]),PER=rch([10,15,20,25,30,40]),v=PER/g;return pq('m05l9','peg','PER de '+PER+', croissance des bénéfices de '+g+' % par an. PEG ?',v,[g/PER,PER*g/100,v*2],fN2,'PEG = '+PER+' ÷ '+g+' = '+n2(v)+'.',2)},
+  function(){var Cp=rnd(300,2000,100),D=rnd(0,800,100),E=rnd(40,150,10),v=(Cp+D)/E;return pq('m05l9','ve','Capitalisation '+Cp+' M€, dette nette '+D+' M€, EBITDA '+E+' M€. VE/EBITDA ?',v,[Cp/E,(Cp-D)/E,E/(Cp+D)*10],fN1,'VE = '+Cp+' + '+D+' = '+(Cp+D)+' M€ ; ÷ '+E+' = '+n1(v)+'.',2)}],
+ m05l10:[function(){var F=rch([100,500,1000,5000]),r=rch([4,5,6,8,10]),n=rch([3,5,8,10]),v=F/Math.pow(1+r/100,n);return pq('m05l10','va','Valeur actuelle de '+eur0(F)+' reçus dans '+n+' ans, au taux de '+r+' % ?',v,[F*(1-r/100*n),F*Math.pow(1+r/100,n),F/(1+r/100)],fE0,eur0(F)+' ÷ '+n2(1+r/100)+'^'+n+' = '+eur0(F)+' ÷ '+n2(Math.pow(1+r/100,n))+' ≈ '+eur0(v)+'.',3)},
+  function(){var F=rch([5,8,10,12,20]),r=rch([7,8,9,10]),g=rch([1,2,3]),v=F/((r-g)/100);return pq('m05l10','gor','Flux de '+F+' M€ l’an prochain, rendement exigé '+r+' %, croissance perpétuelle '+g+' %. Valeur selon Gordon ?',v,[F/(r/100),F/((r+g)/100),F*(r-g)],function(x){return nf1.format(x)+' M€'},F+' ÷ ('+r+' % − '+g+' %) = '+F+' ÷ '+n2((r-g)/100)+' = '+nf1.format(v)+' M€.',3)}],
+ m05l11:[function(){var V=rch([40,50,60,80,100,120]),m=rch([20,25,30,40,50]),v=V*(1-m/100);return pq('m05l11','px','Valeur estimée '+eur0(V)+', marge de sécurité exigée '+m+' %. Prix d’achat maximum ?',v,[V*m/100,V/(1+m/100),V-m],fE2,eur0(V)+' × (1 − '+m+' %) = '+eur(v)+'.',1)}],
+ m06l6:'FX',m13l6:'FX',
+ m06l7:[function(){var L=rnd(2,20,1),V=L*rch([15,20,25,30]),v=L/V*100;return pq('m06l7','rdt','Loyers annuels '+L+' M€, valeur de l’immeuble '+V+' M€. Rendement locatif brut ?',v,[V/L,v*2,v/2],fP2,L+' ÷ '+V+' = '+fP2(v)+'.',1)}],
+ m06l9:'POCHE',m07l8:'POCHE',
+ m07l2:[function(){var K=rnd(10000,200000,5000),p=rch([30,40,50,60,70,80]),v=K*p/100;return pq('m07l2','alloc','Portefeuille de '+eur0(K)+' avec '+p+' % d’actions. Montant en actions ?',v,[K*(100-p)/100,K/p,v/10],fE0,eur0(K)+' × '+p+' % = '+eur0(v)+'.',1)},
+  function(){var K=rnd(200000,1500000,50000),v=K*0.04;return pq('m07l2','r4','Selon la règle des 4 %, quel retrait annuel initial permet un capital de '+eur0(K)+' ?',v,[K*0.4/10,K*0.07,v/12],fE0,eur0(K)+' × 4 % = '+eur0(v)+'.',1)}],
+ m07l4:[function(){var A=rnd(30,90,2)*1000,O=rnd(10,60,2)*1000,c=rch([50,60,70,80]),T=A+O,tgt=T*c/100,v=A-tgt;if(Math.abs(v)<1000){A+=6000;T=A+O;tgt=T*c/100;v=A-tgt}return pq('m07l4','reb','Actions '+eur0(A)+', obligations '+eur0(O)+', cible '+c+' % actions. Montant d’actions à vendre (ou à acheter si négatif) ?',v,[A-c*1000,T*c/100,v/2],function(x){return (x<0?'acheter ':'vendre ')+eur0(Math.abs(x))},'Total '+eur0(T)+'. Cible actions = '+eur0(T)+' × '+c+' % = '+eur0(tgt)+'. Écart : '+eur0(A)+' − '+eur0(tgt)+' = '+eur0(v)+'.',3)}],
+ m07l5:[function(){var M=rch([100,150,200,300]),ps=[rnd(10,40,1),rnd(10,40,1),rnd(10,40,1)],u=ps.reduce(function(a,p){return a+M/p},0),v=3*M/u;return pq('m07l5','dca',eur0(M)+' investis trois fois, aux prix de '+ps.map(function(p){return eur0(p)}).join(', ')+'. Prix moyen d’achat ?',v,[(ps[0]+ps[1]+ps[2])/3,Math.min.apply(null,ps),Math.max.apply(null,ps)],fE2,'Parts : '+ps.map(function(p){return n2(M/p)}).join(' + ')+' = '+n2(u)+'. Prix moyen = '+eur0(3*M)+' ÷ '+n2(u)+' = '+eur(v)+'.',3)}],
+ m07l7:[function(){var r=rch([3,5,7,8,10,12]),n=rch([3,5,8,10]),V0=rch([1000,5000,10000]),V1=Math.round(V0*Math.pow(1+r/100,n));return pq('m07l7','cagr',eur0(V0)+' deviennent '+eur0(V1)+' en '+n+' ans. Rendement annualisé ?',r,[(V1/V0-1)*100/n,(V1/V0-1)*100,r*1.5],fP1,'('+eur0(V1)+' ÷ '+eur0(V0)+')^(1/'+n+') − 1 ≈ '+fP1(r)+'.',3)},
+  function(){var R=rch([5,6,7,8,9,10,12]),f=rch([1,2,3]),s=rch([8,10,12,15,20]),v=(R-f)/s;return pq('m07l7','sh','Rendement '+R+' %, taux sans risque '+f+' %, volatilité '+s+' %. Ratio de Sharpe ?',v,[R/s,(R+f)/s,s/(R-f)],fN2,'('+R+' − '+f+') ÷ '+s+' = '+n2(v)+'.',2)}],
+ m08l9:[function(){var C=rch([500,1000,2000,5000]),L=rch([2,5,10,20]),b=rch([5,10,20]),v=C*L*b/100;return pq('m08l9','lev','Capital de '+eur0(C)+' avec un levier de '+L+'. Le marché baisse de '+b+' %. Perte ?',Math.min(v,C)===v?v:C,[C*b/100,C*L,v/2],fE0,'Exposition = '+eur0(C)+' × '+L+' = '+eur0(C*L)+'. Perte = '+eur0(C*L)+' × '+b+' % = '+eur0(v)+(v>=C?' : tout le capital est perdu.':'.'),2)}],
+ m11l1:[function(){var P=rch([1000,2000,2500,3000]),g=rch([3,4,5,6]),i=rch([1,2]),P2=P*(1+g/100),v=g-i;return pq('m11l1','pib','Le PIB nominal passe de '+n0(P)+' à '+n0(P2)+' milliards, avec '+i+' % d’inflation. Croissance réelle ?',v,[g,g+i,(P2-P)/P2*100],fP1,'Nominale : ('+n0(P2)+' − '+n0(P)+') ÷ '+n0(P)+' = '+g+' %. Réelle ≈ '+g+' − '+i+' = '+fP1(v)+'.',2)}],
+ m11l5:[function(){var i=rch([3,4,5,6]),p=rch([1,2]),v=((1+i/100)/(1+p/100)-1)*100;return pq('m11l5','fis','Taux nominal '+i+' %, inflation '+p+' %. Taux réel exact ?',v,[i-p+0.3,(i-p)*1.2,i/p],fP2,'(1 + '+i+' %) ÷ (1 + '+p+' %) − 1 = '+n2(1+i/100)+' ÷ '+n2(1+p/100)+' − 1 = '+fP2(v)+'.',3)}],
+ m11l6:[function(){var n=rch([0.5,1,1.5]),p=rch([1,2,3,4,5]),c=2,y=rch([-2,-1,0,1,2]),v=n+p+0.5*(p-c)+0.5*y;return pq('m11l6','tay','Taux neutre '+n1(n)+' %, inflation '+p+' %, cible 2 %, écart de production '+sg(y)+' %. Taux de Taylor ?',v,[n+p,n+p+(p-c)+y,v+1],fP1,n1(n)+' + '+p+' + 0,5 × ('+p+' − 2) + 0,5 × ('+y+') = '+fP1(v)+'.',3)}],
+ m13l8:[function(){var P=rch([20,50,80,100,250]),d=rch([10,15,20,25,50]),v=P*(1+d/100);return pq('m13l8','dd','Produit importé à '+eur0(P)+', droit de douane de '+d+' %. Nouveau coût ?',v,[P*d/100,P/(1-d/100),P+d],fE2,eur0(P)+' × (1 + '+d+' %) = '+eur(v)+'.',1)}]
+};
+var PG_SHARED={
+ RECOV:function(lid){var L=rch([10,20,25,30,40,50,60,75,80,90]),v=L/(100-L)*100;return pq(lid,'recov','Après une perte de '+L+' %, quelle hausse faut-il pour revenir au point de départ ?',v,[L,L*1.5,L/2],function(x){return '+'+nf0.format(Math.round(x))+' %'},'Hausse = perte ÷ (1 − perte) = '+n2(L/100)+' ÷ '+n2(1-L/100)+' = +'+nf0.format(Math.round(v))+' %.',2)},
+ FX:function(lid){var a=rch([-10,-5,5,8,10,15,20]),f=rch([-10,-8,-5,5,8,10]),v=((1+a/100)*(1+f/100)-1)*100;return pq(lid,'fx','Tes actions américaines font '+sg(a)+' % en dollars et le dollar varie de '+sg(f)+' % face à l’euro. Résultat en euros ?',v,[a,a-f,(a+f)*1.5],function(x){return (x>=0?'+':'−')+nf1.format(Math.abs(x))+' %'},n2(1+a/100)+' × '+n2(1+f/100)+' = '+n2(1+v/100)+', soit '+(v>=0?'+':'')+n1(v)+' %.',2)},
+ POCHE:function(lid){var w=rch([2,5,10,15,20]),c=rch([-90,-80,-50,-30,30,50,100]),v=w*c/100;return pq(lid,'poche','Une poche de '+w+' % du portefeuille varie de '+sg(c)+' %. Effet sur le total ?',v,[c,w,c/w],function(x){return (x>=0?'+':'−')+nf1.format(Math.abs(x))+' %'},'Effet = '+w+' % × '+sg(c)+' % = '+(v>=0?'+':'')+n1(v)+' %.',1)}
+};
+function pgFns(lid){var g=PGEN[lid];if(!g)return [];if(typeof g==='string')return [function(){return PG_SHARED[g](lid)}];return g}
+function pgMake(lid,n,seen){var fs=pgFns(lid),out=[],tries=0;seen=seen||{};while(out.length<n&&fs.length&&tries<n*8){tries++;var q;try{q=rch(fs)()}catch(e){continue}if(!q||q.opts.length<4||seen[q.sig])continue;seen[q.sig]=1;out.push(q)}return out}
+function addParam(out,lids,share){var n=Math.round(out.length*share),cand=lids.filter(function(l){return pgFns(l).length});if(!n||!cand.length)return out;
+  var made=[],seen={},k=0;while(made.length<n&&k<n*4){var got=pgMake(cand[k%cand.length],1,seen);if(got.length)made.push(got[0]);k++}
+  var keep=out.slice(),drop=made.length;for(var i=keep.length-1;i>=0&&drop>0;i--){var s=keep[i].sig;if(s.indexOf('#')>0&&s.indexOf('mx:')!==0&&!keep[i].param){keep.splice(i,1);drop--}}
+  return keep.concat(made)}
+
+/* ---------- variant form: answer shown, find the question ---------- */
+function reverseQ(l,qi){var b=l.quiz[qi];if(!b||String(b.a).length>45||b.q.length>110||/^\d|^(Vrai|Faux|Oui|Non)\b/i.test(b.a))return null;
+  var others=shuffle(l.quiz.map(function(x,i){return i}).filter(function(i){var o=l.quiz[i];return i!==qi&&o.q.length<=110&&o.a!==b.a&&o.w.indexOf(b.a)<0}));if(others.length<3)return null;
+  var opts=[{t:b.q,ok:1}].concat(others.slice(0,3).map(function(i){return {t:l.quiz[i].q,ok:0}}));
+  return {sig:l.id+'#'+qi,q:'« '+b.a+' » est la bonne réponse à quelle question ?',opts:shuffle(opts),explain:b.q+' → '+b.a+'. '+b.e,lesson:l.id,d:Math.min(3,(b.d||1)+1),rev:1}}
+
+/* ---------- practice mode: unlimited questions with immediate step-by-step correction ---------- */
+var DRILL=null;
+function drillLids(lid){var l=LX[lid];if(!l)return [];var a=pgFns(lid).length?[lid]:[];if(!a.length)l.mod.lessons.forEach(function(x){if(pgFns(x.id).length)a.push(x.id)});return a}
+function drillStart(lid){var ids=drillLids(lid);if(!ids.length){toast('Pas d’exercices de calcul pour cette leçon');return}DRILL={lid:lid,ids:ids,ok:0,n:0,streak:0,seen:{}};drillNext()}
+function drillNext(){var d=DRILL;if(!d)return;var q=pgMake(rch(d.ids),1,d.seen)[0]||pgMake(rch(d.ids),1,{})[0];if(!q){toast('Plus d’exercice disponible');return}d.q=q;d.sel=-1;
+  var l=LX[d.lid];S.drill=S.drill||{};var mastered=S.drill[d.lid];
+  sheet('<div class="sheet-top"><span class="k">Entraînement · '+esc(l?l.title:'')+'</span><button class="xbtn" data-close="1" aria-label="Fermer">✕</button></div>'+
+   '<div class="row"><span class="note">Série : <b class="num" style="color:var(--text)">'+d.streak+' / 5</b> '+(mastered?'· notion acquise ✓':'')+'</span><span class="note num">'+d.ok+' juste'+(d.ok>1?'s':'')+' sur '+d.n+'</span></div><div class="bar"><i style="width:'+Math.min(100,d.streak/5*100)+'%"></i></div>'+
+   '<h2 class="q-title">'+esc(q.q)+'</h2><div style="display:flex;flex-direction:column;gap:10px" role="group" aria-label="Réponses">'+q.opts.map(function(o,i){return '<button class="opt" data-dopt="'+i+'" aria-pressed="false"><span class="lt">'+'ABCD'[i]+'</span>'+(o.s?'<span class="mxo"><small>'+esc(o.s)+'</small><b>'+esc(o.v)+'</b></span>':'<span>'+esc(o.t)+'</span>')+'</button>'}).join('')+'</div>'+
+   '<div id="drFb"></div><button class="btn" id="drGo" disabled>Vérifier</button><p class="note">Pas de chrono ni de points : de nouveaux chiffres à chaque question. 5 bonnes réponses d’affilée = notion acquise.</p>');
+  document.querySelectorAll('[data-dopt]').forEach(function(b){b.addEventListener('click',function(){if(d.done)return;d.sel=+b.dataset.dopt;document.querySelectorAll('[data-dopt]').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});$('#drGo').disabled=false})});
+  d.done=false;$('#drGo').addEventListener('click',function(){if(d.done){drillNext();return}if(d.sel<0)return;d.done=true;var ok=!!q.opts[d.sel].ok;d.n++;if(ok){d.ok++;d.streak++}else d.streak=0;
+    if(d.streak>=5&&!S.drill[d.lid]){S.drill[d.lid]=now();addXP(50);save();toast('Notion acquise : +50 points')}
+    document.querySelectorAll('[data-dopt]').forEach(function(x,i){if(q.opts[i].ok)x.classList.add('right');else if(i===d.sel)x.classList.add('wrong')});
+    $('#drFb').innerHTML='<div class="fbk '+(ok?'ok':'ko')+'"><b>'+(ok?'Juste !':'Pas tout à fait.')+'</b><div>'+esc(q.explain)+'</div></div>';$('#drGo').textContent='Question suivante';save()})}
+/* ---------- navigation ---------- */
+/* ================= BUDGET : planificateur d'argent (revenus, dépenses, dettes, objectifs, coach IA) ================= */
+var BCAT={
+ logement:{n:'Logement',k:'b',ic:'⌂',hint:'Loyer, charges, taxe foncière'},
+ energie:{n:'Énergie et eau',k:'b',ic:'ϟ',hint:'Électricité, gaz, eau'},
+ courses:{n:'Courses',k:'b',ic:'◍',hint:'Alimentation, produits du quotidien'},
+ transport:{n:'Transport',k:'b',ic:'➜',hint:'Carburant, transports, entretien, péage'},
+ assurances:{n:'Assurances et santé',k:'b',ic:'✚',hint:'Mutuelle, habitation, auto'},
+ telecom:{n:'Internet et téléphone',k:'b',ic:'◎',hint:'Box, forfait mobile'},
+ enfants:{n:'Enfants et famille',k:'b',ic:'☺',hint:'Garde, cantine, activités, pension versée'},
+ sante:{n:'Santé',k:'b',ic:'♥',hint:'Médecin, pharmacie, lunettes non remboursés'},
+ animaux:{n:'Animaux',k:'b',ic:'❀',hint:'Nourriture, vétérinaire'},
+ banque:{n:'Frais bancaires',k:'b',ic:'▣',hint:'Carte, tenue de compte, agios'},
+ impots:{n:'Impôts',k:'b',ic:'§',hint:'Impôt sur le revenu, taxe foncière'},
+ abonnements:{n:'Abonnements',k:'e',ic:'▶',hint:'Streaming, salle de sport, applis'},
+ loisirs:{n:'Sorties et loisirs',k:'e',ic:'♪',hint:'Restaurants, sorties, vacances'},
+ shopping:{n:'Shopping',k:'e',ic:'◆',hint:'Vêtements, high-tech, déco'},
+ habitudes:{n:'Tabac, alcool, jeux',k:'e',ic:'◌',hint:'Tabac, vape, alcool, paris, loto'},
+ autres:{n:'Autres',k:'e',ic:'…',hint:'Cadeaux, imprévus'}
+};
+var BPER={m:['par mois',1],w:['par semaine',52/12],q:['par trimestre',1/3],y:['par an',1/12]};
+/* type : [nom, taux par défaut, prioritaire (1/0), conseil] */
+var BDEBT={
+ loyer:['Loyer ou charges en retard',0,1,'Préviens ton propriétaire tout de suite et propose-lui un échéancier par écrit. Le Fonds de solidarité pour le logement (FSL) de ton département peut aider à payer cette dette ; si tu touches l’APL, préviens aussi la CAF. Un loyer impayé peut mener à une procédure d’expulsion : c’est la dette à traiter en premier.'],
+ energie:['Facture d’énergie ou d’eau impayée',0,1,'Appelle ton fournisseur pour demander un échéancier et vérifie si tu as droit au chèque énergie. Le FSL aide aussi pour l’énergie et l’eau. Du 1er novembre au 31 mars (trêve hivernale), le gaz et l’électricité de ta résidence principale ne peuvent pas être coupés, mais la dette continue de courir.'],
+ pension:['Pension alimentaire en retard',0,1,'La pension alimentaire passe avant les autres dettes : elle peut être récupérée directement sur ton salaire, notamment par l’Aripa (CAF). Si tes revenus ont baissé, demande au juge aux affaires familiales de revoir le montant, sans arrêter de payer en attendant.'],
+ impots:['Impôts impayés',0,1,'Écris à ton service des impôts depuis la messagerie de ton espace sur impots.gouv.fr pour demander un plan de règlement, avant qu’il ne prélève directement sur ton salaire ou ton compte. Un retard de paiement entraîne en général une majoration de 10 %.'],
+ amende:['Amende impayée',0,1,'Une amende impayée devient majorée (par exemple 135 € qui passent à 375 €). Si tu ne peux pas payer d’un coup, demande des délais au comptable du Trésor public indiqué sur l’avis. Sans réaction, la somme peut être prélevée sur ton compte ou ton salaire.'],
+ caf:['Trop-perçu CAF ou France Travail',0,1,'Demande un remboursement en plusieurs fois, ou une remise de dette si ta situation est difficile. Sans accord, une partie de tes prochaines aides est retenue automatiquement.'],
+ urssaf:['Cotisations URSSAF en retard',0,1,'Demande un délai de paiement depuis ton espace URSSAF avant les majorations de retard. Plus tu le fais tôt, plus l’accord est facile à obtenir.'],
+ sante:['Facture d’hôpital ou de santé',0,1,'Vérifie d’abord que l’Assurance maladie et ta mutuelle ont bien payé leur part. Pour un hôpital public, c’est le Trésor public qui encaisse : tu peux lui demander des délais.'],
+ recouv:['Dette en recouvrement',0,0,'Une société de recouvrement ne peut pas saisir ton salaire ni ton compte sans décision de justice. Demande-lui par écrit la preuve de la dette et propose un échéancier réaliste. Un commissaire de justice (ex-huissier) qui a un jugement peut, lui, saisir : réponds-lui sans attendre.'],
+ telecom:['Facture de téléphone ou internet impayée',0,0,'Appelle l’opérateur pour étaler la dette et passe à un forfait moins cher. Sans accord, la ligne peut être suspendue et la dette confiée à une société de recouvrement.'],
+ decouvert:['Découvert',16,0,'Un découvert coûte cher (agios et frais d’incident). Demande à ta banque une autorisation de découvert, ou un prêt moins cher pour le rembourser, puis vise un compte qui ne passe plus dans le rouge.'],
+ fractionne:['Achats payés en 3 ou 4 fois',0,0,'Chaque échéance semble petite, mais elles s’additionnent. N’en ouvre plus tant que ton budget n’est pas équilibré : un retard peut entraîner des frais.'],
+ revolving:['Crédit renouvelable',19,0,'C’est souvent le crédit le plus cher. Rembourse-le en priorité, puis demande sa résiliation pour ne pas y retomber.'],
+ conso:['Crédit à la consommation',6,0,''],
+ auto:['Prêt auto',5,0,''],
+ immo:['Crédit immobilier',3.5,0,''],
+ etudiant:['Prêt étudiant',1.5,0,''],
+ perso:['Dette à un proche',0,0,'Parle franchement à la personne, propose un montant fixe chaque mois et tiens-le : c’est ce qui préserve la relation.'],
+ autre:['Autre dette',8,0,'']};
+var BDK=Object.keys(BDEBT);
+function bPrio(d){return !!(BDEBT[d.k]||[])[2]}
+var ARRQ=[['loyer','As-tu du retard de loyer ou de charges ?'],['energie','Des factures d’électricité, de gaz ou d’eau impayées ?'],['impots','Des impôts en retard (impôt sur le revenu, taxe foncière…) ?'],['amende','Des amendes impayées (radar, stationnement, transports…) ?'],['pension','Une pension alimentaire en retard ?'],['caf','Un trop-perçu à rembourser à la CAF ou à France Travail ?'],['urssaf','Des cotisations URSSAF en retard (indépendant) ?'],['sante','Des factures d’hôpital ou de santé impayées ?'],['telecom','Des factures de téléphone ou d’internet impayées ?'],['recouv','Une dette réclamée par une société de recouvrement ou un commissaire de justice ?'],['decouvert','Ton compte est-il à découvert en ce moment ?','Montant du découvert (€)'],['fractionne','Des achats payés en 3 ou 4 fois en cours ?','Reste à payer (€)'],['perso','De l’argent emprunté à un proche ?']];
+var BFLAGS=[['relances','Je reçois des relances ou des appels pour des dettes'],['saisie','Une partie de mon salaire ou de mon compte est saisie'],['ficp','Je suis fiché à la Banque de France (FICP)'],['surend','J’ai un dossier de surendettement en cours']];
+function bid(){return Math.random().toString(36).slice(2,9)}
+function bmon(e){return (+e.a||0)*(+e.n||1)*((BPER[e.f]||BPER.m)[1])}
+function bnum(v){v=String(v==null?'':v).replace(/\s/g,'').replace(',','.');var x=parseFloat(v);return isFinite(x)?x:0}
+function r10(x){return Math.round(x/10)*10}
+function bmonth(d){d=d||new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)}
+var MOIS=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+function mlabel(n){var d=new Date();d.setDate(1);d.setMonth(d.getMonth()+n);return MOIS[d.getMonth()]+' '+d.getFullYear()}
+function bDemo(){return {v:1,v2:1,demo:1,btab:'home',docs:[{id:'p1',k:'amende',l:'Amende radar',a:135,due:addDays(5),maj:375,status:'due',created:0},{id:'p2',k:'energie',l:'Régularisation électricité',a:186,due:addDays(19),maj:0,status:'due',created:0}],stable:1,safety:1200,extra:0,strat:'avalanche',
+ inc:[{id:'i1',l:'Salaire net',a:2300},{id:'i2',l:'Prime annuelle (lissée)',a:100}],
+ exp:[{id:'e1',c:'logement',l:'Loyer',a:720,f:'m'},{id:'e2',c:'energie',l:'Électricité',a:65,f:'m'},{id:'e3',c:'energie',l:'Eau',a:90,f:'q'},
+  {id:'e4',c:'courses',l:'Courses',a:85,f:'w'},{id:'e5',c:'transport',l:'Carburant (un plein)',a:70,f:'m',n:3},{id:'e6',c:'assurances',l:'Assurance auto',a:45,f:'m'},
+  {id:'e7',c:'assurances',l:'Mutuelle',a:38,f:'m'},{id:'e8',c:'telecom',l:'Box internet',a:30,f:'m'},{id:'e9',c:'telecom',l:'Forfait mobile',a:15,f:'m'},
+  {id:'e10',c:'abonnements',l:'Streaming (3 services)',a:34,f:'m'},{id:'e11',c:'abonnements',l:'Salle de sport',a:30,f:'m'},
+  {id:'e12',c:'loisirs',l:'Restaurants et sorties',a:150,f:'m'},{id:'e13',c:'loisirs',l:'Vacances',a:1200,f:'y'},{id:'e14',c:'shopping',l:'Vêtements',a:60,f:'m'}],
+ debts:[{id:'d1',k:'revolving',l:'Carte de magasin',bal:1800,rate:19.5,pay:80},{id:'d2',k:'auto',l:'Prêt auto',bal:6400,rate:5.9,pay:210}],
+ foyer:{couple:0,kids:0,act:'salarie',log:'locataire',age:'a25',hand:0},goals:[{id:'g1',t:'projet',l:'Vacances au Portugal',target:1500,saved:200,date:bmonth(new Date(Date.now()+270*864e5))}],
+ tx:{}}}
+function bEmpty(){return {v:1,v2:1,demo:0,btab:'home',stable:1,safety:0,extra:0,strat:'avalanche',inc:[],exp:[],debts:[],goals:[],docs:[],tx:{},flags:{},foyer:null}}
+function bud(){if(!S.bud||S.bud.demo){S.bud=bEmpty();S.inv=null}var b=S.bud;['inc','exp','debts','goals'].forEach(function(k){if(!Array.isArray(b[k]))b[k]=[]});if(!b.tx)b.tx={};if(!b.flags)b.flags={};b.debts.forEach(function(d){if(!BDEBT[d.k])d.k='autre'});if(!Array.isArray(b.docs))b.docs=[];if(!b.v2){b.v2=1;b.btab='home'}docSync(b);return b}
+
+/* ----- calculs ----- */
+function bCalc(){var b=bud(),inc=0,need=0,want=0,byCat={};
+  b.inc.forEach(function(i){inc+=+i.a||0});
+  b.exp.forEach(function(e){var m=bmon(e),c=BCAT[e.c]||BCAT.autres;byCat[e.c]=(byCat[e.c]||0)+m;if(c.k==='b')need+=m;else want+=m});
+  var dpay=0,dbal=0,dint=0,expensive=[],urgent=[],unplanned=[],nopay=[];b.debts.forEach(function(d){dpay+=+d.pay||0;dbal+=+d.bal||0;dint+=(+d.bal||0)*(+d.rate||0)/100;if((+d.bal||0)<=0)return;if((+d.rate||0)>=8)expensive.push(d);if(bPrio(d)){urgent.push(d);if(!((+d.pay||0)>0))unplanned.push(d)}else if(!((+d.pay||0)>0))nopay.push(d)});
+  var ord=function(a,c){return BDK.indexOf(a.k)-BDK.indexOf(c.k)};urgent.sort(ord);unplanned.sort(ord);var fl=b.flags||{},nflags=BFLAGS.filter(function(f){return fl[f[0]]}).length;
+  var left=inc-need-want-dpay,ess=need+dpay,tgtM=b.stable?3:6,safeT=ess*tgtM;
+  return {inc:inc,need:need,want:want,dpay:dpay,dbal:dbal,dint:dint,left:left,rate:inc?left/inc:0,byCat:byCat,ess:ess,safeT:safeT,safeM:ess?(+b.safety||0)/ess:0,tgtM:tgtM,expensive:expensive,urgent:urgent,unplanned:unplanned,nopay:nopay,nflags:nflags,debtRatio:inc?dpay/inc:0}}
+/* simulation de remboursement : avalanche (taux) ou boule de neige (petit solde) */
+function bDebtSim(extra,strat,roll){var ds=bud().debts.filter(function(d){return (+d.bal||0)>0}).map(function(d){return {id:d.id,l:d.l,k:d.k,p:bPrio(d)?1:0,bal:+d.bal,r:(+d.rate||0)/1200,pay:+d.pay||0,done:0}});
+  var m=0,interest=0,stuck=false;if(!ds.length)return {months:0,interest:0,order:[],stuck:false};
+  while(ds.some(function(d){return d.bal>0.005})&&m<600){m++;var pool=extra||0;
+    ds.forEach(function(d){if(d.bal<=0.005){if(roll)pool+=d.pay;return}var i=d.bal*d.r;interest+=i;d.bal+=i;var p=Math.min(d.pay,d.bal);d.bal-=p;if(d.bal<=0.005&&!d.done)d.done=m});
+    var act=ds.filter(function(d){return d.bal>0.005});act.sort(strat==='boule'?function(a,c){return (c.p-a.p)||a.bal-c.bal}:function(a,c){return (c.p-a.p)||c.r-a.r||a.bal-c.bal});
+    for(var j=0;j<act.length&&pool>0.005;j++){var x=Math.min(pool,act[j].bal);act[j].bal-=x;pool-=x;if(act[j].bal<=0.005&&!act[j].done)act[j].done=m}
+    if(m===1&&!extra&&ds.some(function(d){return d.bal>0.005&&d.pay<=d.bal*d.r+0.01}))stuck=true}
+  ds.forEach(function(d){if(!d.done)d.done=m>=600?null:m});
+  return {months:m>=600?null:m,interest:interest,order:ds.slice().sort(function(a,c){return (a.done||9999)-(c.done||9999)}),stuck:stuck}}
+/* score de santé financière sur 100 */
+function bScoreItems(c){if(!c.inc)return [];var pc=function(x){return nf0.format(Math.max(0,x)*100)+' %'};
+  var it=[['Épargne',Math.max(0,Math.min(30,c.rate/0.2*30)),30,'Tu mets de côté '+pc(c.rate)+' de tes revenus. Objectif : 20 %.'],
+   ['Matelas de sécurité',Math.max(0,Math.min(25,c.safeM/c.tgtM*25)),25,nf1.format(c.safeM)+' mois de dépenses de côté sur '+c.tgtM+' visés.'],
+   ['Dettes chères ou urgentes',(c.expensive.length||c.unplanned.length)?0:20,20,c.unplanned.length?c.unplanned.length+' impayé'+(c.unplanned.length>1?'s':'')+' sans solution : c’est la priorité.':c.expensive.length?'Encore '+c.expensive.length+' crédit'+(c.expensive.length>1?'s':'')+' à 8 % ou plus.':'Aucune dette chère ni impayé en attente.'],
+   ['Poids des crédits',c.debtRatio<=0.35?15*(1-Math.max(0,c.debtRatio-0.15)/0.2*0.5):0,15,'Tes mensualités prennent '+pc(c.debtRatio)+' de tes revenus. Repère : 35 % maximum.'],
+   ['Dépenses essentielles',c.need/c.inc<=0.5?10:c.need/c.inc<=0.65?5:0,10,'L’essentiel représente '+pc(c.need/c.inc)+' de tes revenus. Repère : 50 %.']];
+  if(c.unplanned.length)it.push(['Pénalité impayés',-10,0,'Retirée dès qu’un échéancier est en place.']);if(c.nflags)it.push(['Situation à surveiller',-5,0,'Relances, saisie ou fichage signalés.']);return it}
+function bScore(c){if(!c.inc)return 0;var s=bScoreItems(c).reduce(function(a,x){return a+x[1]},0);return Math.round(Math.max(0,Math.min(100,s)))}
+function scoreRows(items){return items.map(function(x){var p=x[2]?Math.max(0,x[1])/x[2]:0;return '<div class="scrow"><div class="row"><span><b>'+x[0]+'</b></span><span class="num">'+(x[2]?nf0.format(Math.max(0,x[1]))+' / '+x[2]:'<span style="color:var(--down)">'+x[1]+'</span>')+'</span></div>'+(x[2]?'<div class="b53bar"><i style="width:'+(p*100)+'%;background:'+(p>=0.75?'var(--up)':p>=0.45?'var(--warn)':'var(--down)')+'"></i></div>':'')+'<div class="note">'+x[3]+'</div></div>'}).join('')}
+function bScoreSheet(){var c=bCalc(),sc=bScore(c),sl=bScoreLabel(sc);
+  sheet('<div class="sheet-top"><span class="k">Budget</span><button class="xbtn" data-close="1" aria-label="Fermer">✕</button></div><div class="scorehead">'+ring(sc/100,84,8,'<span class="num" style="font-size:22px">'+nf1.format(sc/10)+'</span><small>/10</small>',sl[1])+'<div><h2 class="title-xl" style="font-size:24px">Note de ton budget</h2><div class="badge" style="color:'+sl[1]+'">'+sl[0]+'</div></div></div>'+
+   '<div class="card">'+scoreRows(bScoreItems(c))+'</div><p class="note">Les repères sont ceux des conseillers en budget : épargner 20 %, garder 3 à 6 mois de dépenses de côté, ne pas dépasser 35 % de crédits.</p>')}
+
+function bScoreLabel(s){return s>=80?['Excellent','var(--up)']:s>=60?['Solide','var(--up)']:s>=40?['À consolider','var(--warn)']:['Fragile','var(--down)']}
+/* feuille de route : où en est la personne */
+function bBal(c){var b=bud(),need=Math.max(30,Math.round(c.inc*0.05)),mk=bmonth(),sp=(b.tx[mk]||[]).reduce(function(a,t){return a+(+t.a||0)},0),d=new Date(),pace=d.getDate()/new Date(d.getFullYear(),d.getMonth()+1,0).getDate(),plan=c.need+c.want,over=sp>0&&d.getDate()>=7&&sp>plan*pace*1.15+20;
+  if(!c.inc)return [false,'Ajoute d’abord tes revenus.'];
+  if(c.left<0)return [false,'Il te manque '+eur0(-c.left)+' par mois.'];
+  if(c.left<need)return [false,'Il ne te reste que '+eur0(c.left)+' par mois : vise au moins '+eur0(need)+' de marge.'];
+  if(over)return [false,'Sur le papier ça passe, mais ce mois-ci tu as déjà dépensé '+eur0(sp)+' : plus vite que prévu.'];
+  return [true,eur0(c.left)+' de marge par mois'+(sp?', et tes dépenses du mois suivent le plan':'')+'.']}
+function bSteps(c){var r=bSteps0(c);if(!c.inc)r.forEach(function(x){x[3]=false});return r}
+function bSteps0(c){var b=bud(),goals=b.goals.filter(function(g){return g.t==='projet'}),bal=bBal(c);
+  return [
+   ['urgences','Mettre les dettes urgentes sous contrôle','Loyer, énergie, impôts, amendes, pension, aides à rembourser : pour chacune, un échéancier accepté par le créancier ou la dette soldée.',!c.unplanned.length,'m01l6'],
+   ['equilibre','Équilibrer le budget','Tes revenus couvrent toutes tes dépenses, avec une marge pour les imprévus. '+bal[1],bal[0],'m01l4'],
+   ['mini','Mini-matelas d’un mois','Un mois de dépenses essentielles de côté, pour ne plus subir les imprévus.',c.safeM>=1,'m01l5'],
+   ['dettes','Rembourser les dettes chères','Plus aucun crédit à 8 % ou plus. Chaque euro remboursé rapporte ce taux, sans risque.',!c.expensive.length,'m01l6'],
+   ['matelas','Matelas complet ('+c.tgtM+' mois)','Ton épargne de précaution est au complet, sur un livret disponible.',c.safeM>=c.tgtM,'m01l5'],
+   ['projets','Financer tes projets','Chaque projet daté a son épargne mensuelle.',goals.length?goals.every(function(g){return (+g.saved||0)>=(+g.target||0)}):c.safeM>=c.tgtM,'m07l1'],
+   ['investir','Investir pour le long terme','Investir chaque mois sur un support diversifié, pour faire travailler les intérêts composés.',!!b.goals.some(function(g){return g.t==='investir'&&(+g.monthly||0)>0}),'m03l2']]}
+function monthsTo(ym){if(!ym)return 0;var p=ym.split('-'),d=new Date(),n=(+p[0]-d.getFullYear())*12+(+p[1]-1-d.getMonth());return Math.max(1,n)}
+/* plan du mois : comment répartir ce qui reste */
+function bPlan(c){var b=bud(),rem=Math.floor(Math.max(0,c.left)/5)*5,out=[],gap1=Math.max(0,c.ess-(+b.safety||0)),gapT=Math.max(0,c.safeT-(+b.safety||0));
+  function take(k,l,x,why,lesson){x=Math.max(0,Math.min(rem,x));x=x>=rem-5?rem:Math.floor(x/5)*5;if(x<5)return;rem-=x;out.push({k:k,l:l,a:x,why:why,lesson:lesson})}
+  if(c.left<=0)return out;
+  c.unplanned.forEach(function(d){take('urgent','Régler : '+d.l,+d.bal,'Dette prioritaire. Demande aussi un échéancier au créancier : en attendant, ce montant la réduit chaque mois.','m01l6')});
+  if(gap1>0)take('matelas','Mini-matelas',Math.min(gap1,rem*(c.expensive.length?0.4:0.7)),'Un mois de dépenses de côté d’abord, sur un livret.','m01l5');
+  if(c.expensive.length){var top=c.expensive.slice().sort(function(a,d){return d.rate-a.rate})[0];take('dette','Rembourser plus vite : '+top.l,rem*(gapT>gap1?0.75:1),'À '+nf1.format(top.rate)+' %, chaque euro remboursé est un gain garanti de '+nf1.format(top.rate)+' % par an.','m01l6')}
+  if(gapT>0)take('matelas','Compléter le matelas',Math.min(gapT,rem*0.6),'Objectif : '+eur0(c.safeT)+' disponibles ('+c.tgtM+' mois de dépenses essentielles).','m01l5');
+  b.goals.filter(function(g){return g.t==='projet'&&(+g.target||0)>(+g.saved||0)}).sort(function(a,d){return monthsTo(a.date)-monthsTo(d.date)}).forEach(function(g){var need=((+g.target)-(+g.saved||0))/monthsTo(g.date);take('projet',g.l,need,'Pour atteindre '+eur0(g.target)+' en '+mlabel(monthsTo(g.date))+'.','m07l1')});
+  if(rem>=5)take('investir','Investir pour le long terme',rem,'Placement régulier sur un ETF diversifié (compte-titres ou assurance-vie), pour un horizon de 8 ans ou plus.','m03l2');
+  return out}
+/* conseils automatiques, sans IA */
+function bTips(c){var b=bud(),t=[];if(!c.inc)return t;
+  c.urgent.forEach(function(d){var T=BDEBT[d.k],pl=(+d.pay||0)>0;t.push([pl?'warn':'down',pl?'« '+d.l+' » : échéancier de '+eur0(d.pay)+' par mois. Tiens-le en priorité.':'« '+d.l+' » : '+eur0(d.bal)+' à régler en priorité.',T[3],'m01l6'])});
+  var fl=b.flags||{};
+  if(fl.saisie)t.push(['warn','Une saisie est en cours.','La loi protège une partie de ton salaire, qui ne peut jamais être saisie, et la banque doit toujours te laisser sur ton compte une somme égale au RSA pour une personne seule. Vérifie que ces règles sont respectées.','m01l6']);
+  if(fl.surend)t.push(['acc','Tu as un dossier de surendettement en cours.','Respecte les mesures décidées par la commission, ne prends aucun nouveau crédit, et préviens la Banque de France si tes revenus changent.','m01l6']);
+  if(fl.ficp)t.push(['acc','Tu es fiché à la Banque de France.','Le fichage n’empêche pas d’avoir un compte : la Banque de France peut te désigner une banque qui doit t’ouvrir un compte de base. Il est levé dès que l’incident est régularisé.','m01l6']);
+  if(fl.relances)t.push(['warn','Tu reçois des relances.','Ne les laisse pas sans réponse : demande le détail de la dette par écrit, vérifie-la, puis propose un échéancier que tu peux tenir. Une dette qu’on ignore grossit avec les frais.','m01l6']);
+  if(c.left<0)t.push(['down','Ton budget est dans le rouge de '+eur0(-c.left)+' par mois.','Commence par les envies : '+eur0(c.want)+' par mois aujourd’hui. Repère les 2 ou 3 postes qui pèsent le plus et fixe-leur un plafond.','m01l4']);
+  c.expensive.slice().sort(function(a,d){return d.rate-a.rate}).slice(0,2).forEach(function(d){t.push(['down',d.l+' à '+nf1.format(d.rate)+' % te coûte environ '+eur0(d.bal*d.rate/100)+' d’intérêts par an.','Le rembourser en priorité équivaut à un placement garanti à '+nf1.format(d.rate)+' %. Aucun livret ne rapporte autant.','m01l6'])});
