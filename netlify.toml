@@ -1,0 +1,4 @@
+[build]
+  publish = "."
+  # Assemble index.html et crée les icônes (voir build.js)
+  command = "node build.js"
