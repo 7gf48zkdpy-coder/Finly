@@ -1,0 +1,199 @@
+  var b=bud(),c=bCalc(),open=docOpen(b),T=realTotals(),ps=S.real.length?pfScore(pfStats()):null,done=LORDER.filter(function(id){return S.passed[id]}).length,tot=LORDER.length||1;
+  var stat=function(go,lab,val,sub){return '<button class="hstat" data-go="'+go+'"><span class="hl">'+lab+'</span><b class="num">'+val+'</b><span class="hs2">'+sub+'</span></button>'};
+  var hero='<div class="hhero"><div class="hdate">'+days[d.getDay()]+' '+d.getDate()+' '+months[d.getMonth()]+'</div><h1>'+hello+(S.pseudo?' '+esc(S.pseudo):'')+'</h1>'+
+   '<div class="hline">'+(open.length?open.length+' papier'+(open.length>1?'s':'')+' à suivre · ':'')+'Rang '+S.rank+' · '+esc(RANKS[S.rank-1])+((S.lg&&S.lg.streak)>1?' · série de '+S.lg.streak+' jours':'')+'</div>'+
+   '<div class="hstats">'+
+    stat('budget','Reste / mois',b.demo?'—':(c.left<0?'−':'')+eur0(Math.abs(c.left)),b.demo?'Budget à faire':'Budget')+
+    stat('portefeuille','Portefeuille',ps?nf1.format(ps.note)+'<small>/10</small>':'—',ps?eur0(T.v):'À connecter')+
+    stat('apprendre','Leçons',done+'<small>/'+tot+'</small>',Math.round(done/tot*100)+' % fait')+'</div></div>';
+  var rows=[],row=function(attr,ic,t,sub,extra){return '<button class="lrow hrow" '+attr+'><span class="hico">'+ic+'</span><span class="grow"><span class="t">'+t+'</span><span class="s">'+sub+'</span>'+(extra||'')+'</span><span class="muted">›</span></button>'};
+  var nextL=LORDER.filter(function(id){return !S.passed[id]})[0];
+  if(nextL){var l=LX[nextL],ms=modStats(l.mod);rows.push(row('data-lesson="'+nextL+'"','▶','Continuer : '+esc(l.title),'Module '+l.mod.num+' · leçon '+(l.ix+1)+' sur '+ms.n+' · '+(l.min||8)+' min','<span class="pbar"><i style="width:'+(ms.d/ms.n*100)+'%;background:var(--acc)"></i></span>'))}
+  if(srsDue().length)rows.push(row('data-srs="1"','↻','Révision du jour',Math.min(srsDue().length,10)+' question'+(srsDue().length>1?'s':'')+' à revoir'));
+  recentLessons(1).forEach(function(l){rows.push(row('data-lesson="'+l.id+'"','★',esc(l.title),esc(l.chg||(l.added?'Nouveau cours':'Chiffres mis à jour'))))});
+  if(b.demo)rows.push(row('data-scan="1"','📷','Organise ton budget','Scanne ta première facture ou amende'));
+  if(!S.real.length)rows.push(row('data-go="portefeuille"','📈','Connecte ton portefeuille','Note sur 10 et analyse IA avec l’actu'));
+  else if(!S.pfAI)rows.push(row('data-go="portefeuille"','✦','Fais analyser ton portefeuille','L’IA le relie à l’actualité du moment'));
+  var today=rows.length?'<section class="hsec"><div class="sec-h"><h2>Aujourd’hui</h2></div><div class="grp">'+rows.slice(0,4).join('')+'</div></section>':'';
+  var news=NEWSDATA&&NEWSDATA.items&&NEWSDATA.items.length?'<section class="hsec"><div class="sec-h"><h2>À la une</h2><button class="lnk" data-go="actus">Tout voir</button></div><div class="hnews">'+NEWSDATA.items.slice(0,3).map(function(n,k){return '<button class="hnew'+(k===0?' big':'')+'" data-news="'+n.id+'"><span class="k">'+esc(n.cat)+' · '+ago(n.date)+'</span><span class="t">'+esc(n.title)+'</span></button>'}).join('')+'</div></section>':'';
+  return '<div class="screen home">'+hero+bAlerts()+today+nqBlock(true)+news+'</div>';
+}
+var arank=null;
+function recentDays(ds){if(!ds)return 1e9;var t=Date.parse(ds+'T12:00:00');return isNaN(t)?1e9:(Date.now()-t)/864e5}
+function freshTag(l){return recentDays(l.added)<=21?'<span class="badge acc">Nouveau</span>':recentDays(l.upd)<=21?'<span class="badge">Mis à jour</span>':''}
+function frDate(ds){var t=Date.parse(ds+'T12:00:00');return isNaN(t)?ds:new Date(t).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}
+function recentLessons(n){var a=[];COURSES.forEach(function(m){m.lessons.forEach(function(l){var d=Math.min(recentDays(l.added),recentDays(l.upd));if(d<=14)a.push([d,l])})});return a.sort(function(x,y){return x[0]-y[0]}).slice(0,n).map(function(x){return x[1]})}
+function liveSection(){var lm=COURSES.filter(function(m){return m.live&&m.lessons.length});if(!lm.length)return '';
+  return lm.map(function(m){return '<div class="sec-h"><h2>'+esc(m.title)+'</h2><span class="note">Mis à jour chaque semaine</span></div><div class="grp">'+m.lessons.slice().reverse().map(function(l){var ok=S.passed[l.id];return '<button class="lrow" data-lesson="'+l.id+'"><span class="dot'+(ok?' ok':'')+'">'+(ok?'✓':'★')+'</span><span style="flex:1;min-width:0"><span class="t" style="display:block">'+esc(l.title)+'</span><span class="s" style="display:block">'+(l.added?'Publié le '+frDate(l.added)+' · ':'')+l.quiz.length+' questions</span></span>'+freshTag(l)+'</button>'}).join('')+'</div>'}).join('')}
+function lessonBadge(id){var qz=S.quiz[id]||{};return S.passed[id]?'<span class="badge acc">Validée</span>':(!S.admin&&qz.until>now()?'<span class="badge">Pause</span>':'<span class="badge">À faire</span>')}
+function screenApprendre(){
+  if(coursesState!=='ok')return '<div class="screen"><div class="hdr"><div><h1>Apprendre</h1></div></div><div class="card"><div class="note">'+(coursesState==='err'?'Les cours n’ont pas pu être chargés. Recharge la page.':'Chargement des cours…')+'</div></div></div>';
+  if(!arank)arank=Math.min(7,S.rank);
+  var total=LORDER.length,passedN=LORDER.filter(function(id){return S.passed[id]}).length;
+  var ranks=RANKS.map(function(r,i){var ids=rankLessons(i+1),d=ids.filter(function(id){return S.passed[id]}).length;
+    return '<button class="rk" data-arank="'+(i+1)+'" aria-pressed="'+(arank===i+1)+'"><span class="no">'+(i+1)+'</span><span><span class="nm" style="display:block;margin-bottom:8px">'+r+(ids.length&&d===ids.length?' ✓':'')+'</span><span class="bar"><i style="width:'+(ids.length?d/ids.length*100:0)+'%"></i></span></span></button>'}).join('');
+  var mods=rankMods(arank).map(function(m){var ms=modStats(m),mp=(S.modPassed||{})[m.id];
+    var lk=rankLocked(m.rank);return '<button class="cover'+(mp?' done':'')+(lk?' locked':'')+'" '+(lk?'data-paywall="Le module '+m.num+' fait partie de l’offre Premium."':'data-module="'+m.id+'"')+'>'+(lk?'<span class="lockb">'+ICO.lock+' Premium</span>':'')+'<span class="ghost">'+(m.num<10?'0':'')+m.num+'</span><span class="k">Module '+m.num+(mp?' · test réussi':'')+'</span><span class="ttl">'+esc(m.title)+'</span><span class="meta">'+ms.n+' leçons · '+dur(ms.min)+'<span class="bar"><i style="width:'+(ms.d/ms.n*100)+'%"></i></span>'+ms.d+'/'+ms.n+'</span></button>'}).join('');
+  var rIds=rankLessons(arank),rDone=rIds.filter(function(id){return S.passed[id]}).length;
+  var rMods=rankMods(arank),mDone=rMods.filter(function(m){return (S.modPassed||{})[m.id]}).length,isNext=arank===S.rank&&!S.grandMaster,ready=S.admin||(isNext&&mDone===rMods.length&&!rankLocked(arank));var exN=arank>=7?60:50;
+  var passedR=arank<S.rank||(arank===7&&S.grandMaster);
+  var exam='<div class="cta">'+ring(rMods.length?mDone/rMods.length:0,48,5,'<span style="font-size:13px">'+mDone+'/'+rMods.length+'</span>',passedR?'var(--up)':null)+'<div class="grow"><div style="font-size:16px;font-weight:600;letter-spacing:-.015em">'+(arank<7?'Examen '+RANKS[arank]:'Examen final')+'</div><div class="note">'+(passedR?'Réussi.':exN+' questions · '+Math.ceil(exN*0.8)+' requises'+(ready?'':' · réussis d’abord les tests de module'))+'</div></div>'+(ready&&!passedR?'<button class="btn small" data-exam="'+arank+'">Passer</button>':'')+'</div>';
+  return '<div class="screen">'+
+   '<div class="hdr"><div><div class="sub">'+passedN+' sur '+total+' leçons</div><h1>Apprendre</h1></div>'+ring(passedN/total,52,6,'<span style="font-size:12px">'+Math.round(passedN/total*100)+'%</span>')+'</div>'+
+   '<form id="qaForm" class="srch">'+ICO.search+'<input type="search" id="qaIn" placeholder="Rechercher dans les cours" autocomplete="off" aria-label="Rechercher dans les cours"></form><div id="qaRes" class="grp"></div><div class="ai" id="qaOut" hidden></div>'+placementCard()+
+   '<div class="sec-h"><h2>Rangs</h2><span class="note">'+esc(RANKS[S.rank-1])+' actuellement</span></div>'+
+   '<div class="hs">'+ranks+'</div>'+
+   '<div class="sec-h"><h2>'+esc(RANKS[arank-1])+'</h2><span class="note">'+rDone+'/'+rIds.length+' leçons</span></div>'+
+   mods+exam+amfCard()+liveSection()+
+   '<div class="grp">'+srsRow()+'<button class="lrow" data-review="1"'+(passedN||S.admin?'':' disabled')+'><span class="dot">↻</span><span style="flex:1"><span class="t" style="display:block">Révision mélangée</span><span class="s" style="display:block">'+(passedN?'10 questions tirées de tes leçons validées':'Disponible après ta première leçon')+'</span></span><span class="muted">›</span></button><button class="lrow" data-sim="interets"><span class="dot">%</span><span style="flex:1"><span class="t" style="display:block">Simulateurs</span><span class="s" style="display:block">Intérêts composés, frais, fiscalité, crédit</span></span><span class="muted">›</span></button><button class="lrow" data-glossary="1"><span class="dot">A</span><span style="flex:1"><span class="t" style="display:block">Glossaire</span><span class="s" style="display:block">'+Object.keys(GLOSS).length+' termes expliqués simplement</span></span><span class="muted">›</span></button></div>'+
+   '</div>';
+}
+function openModule(mid){
+  var m=COURSES.filter(function(x){return x.id===mid})[0];if(!m)return;var ms=modStats(m),mp=(S.modPassed||{})[m.id],rdy=S.admin||ms.d===ms.n;
+  sheet('<div class="sheet-top"><span class="k">'+(m.live?'Cours d’actualité':'Rang '+m.rank+' · '+esc(RANKS[m.rank-1]))+'</span><button class="xbtn" data-close="1" aria-label="Fermer">✕</button></div>'+
+   '<div style="display:flex;align-items:center;gap:16px">'+ring(ms.d/ms.n,64,7,'<span style="font-size:13px">'+ms.d+'/'+ms.n+'</span>')+'<div><div class="k" style="font-size:13px;color:var(--sec);font-weight:600">Module '+m.num+'</div><h2 class="title-xl" style="font-size:26px">'+esc(m.title)+'</h2></div></div>'+
+   '<p style="margin:0;font-size:16px;line-height:1.5;color:var(--sec)">'+esc(m.intro||'')+'</p>'+
+   '<div class="grp">'+m.lessons.map(function(l,ix){var ok=S.passed[l.id];return '<button class="lrow" data-lesson="'+l.id+'"><span class="dot'+(ok?' ok':'')+'">'+(ok?'✓':ix+1)+'</span><span style="flex:1;min-width:0"><span class="t" style="display:block">'+esc(l.title)+'</span><span class="s" style="display:block">'+(l.min||8)+' min · '+l.quiz.length+' questions</span></span><span class="muted">›</span></button>'}).join('')+'</div>'+
+   (m.live?'':'<div class="cta">'+ring(mp?1:0,48,5,mp?'✓':'',mp?'var(--up)':null)+'<div class="grow"><div style="font-size:17px;font-weight:600">Test du module</div><div class="note">30 questions · 24 requises · chronométré</div></div>'+(rdy?'<button class="btn small'+(mp?' ghost':'')+'" data-modtest="'+m.id+'">'+(mp?'Refaire':'Passer')+'</button>':'<span class="badge">Verrouillé</span>')+'</div>'));
+}
+function searchReal(q,zone,limit){
+  q=q.trim().toLowerCase();
+  var res=[];
+  for(var i=0;i<REAL.length;i++){var r=REAL[i];if(zone&&zone!=='Tout'&&r.zone!==zone)continue;
+    if(!q){if(res.length<limit)res.push([3,r]);continue}
+    var t=r.t.toLowerCase(),n=r.name.toLowerCase(),sc=-1;
+    if(t===q)sc=0;else if(n.indexOf(q)===0)sc=1;else if(t.indexOf(q)===0)sc=2;else if(n.indexOf(q)>=0)sc=3;else if(r.isin.toLowerCase()===q)sc=0;
+    if(sc>=0)res.push([sc+(r.pc==='p'||r.pc==='US'?0:0.5),r]);
+  }
+  res.sort(function(a,b){return a[0]-b[0]});
+  return {total:res.length,list:res.slice(0,limit).map(function(x){return x[1]})};
+}
+function realRow(r){var own=S.real.some(function(l){return l.key===r.key});return '<button class="item" data-real="'+esc(r.key)+'"><div class="tk">'+esc(r.t)+'</div><div class="grow"><div class="t">'+esc(r.name)+'</div><div class="s">'+(r.etf?'ETF':'Action')+' · '+esc(r.place)+' · '+esc(r.cur)+'</div></div>'+(own?'<span class="badge acc">Détenu</span>':'')+'</button>'}
+function realRows(){
+  if(realError)return '<div class="item"><div class="grow"><div class="t">Catalogue indisponible</div><div class="s">Recharge la page pour réessayer.</div></div></div>';
+  if(!realLoaded)return '<div class="item"><div class="grow"><div class="t">Chargement du catalogue…</div><div class="s">17 213 actions et ETF</div></div></div>';
+  if(!rq.trim()&&rzone==='Tout')return '<div class="item"><div class="grow"><div class="t">Cherche une action ou un ETF</div><div class="s">Nom, ticker ou code ISIN, parmi '+nf0.format(REAL.length)+' valeurs.</div><div class="chips" style="margin-top:8px">'+['LVMH','Apple','TotalEnergies','MSCI World','Nvidia','Air Liquide'].map(function(x){return '<button class="chip" data-rsug="'+x+'">'+x+'</button>'}).join('')+'</div></div></div>';
+  var R=searchReal(rq,rzone,rq.trim()?60:30);
+  if(!R.total)return '<div class="item"><div class="grow"><div class="t">Aucun résultat</div><div class="s">Essaie un nom, un ticker (ex. AAPL) ou un code ISIN.</div></div></div>';
+  return R.list.map(realRow).join('')+(R.total>60?'<div class="item"><div class="grow"><div class="s">'+nf0.format(R.total-60)+' autres résultats : affine ta recherche.</div></div></div>':'');
+}
+function screenMarches(){
+  if(S.mview==='reel'){
+    var zones=['Tout','France','États-Unis','Europe','Royaume-Uni','Canada','ETF'];
+    return '<div class="screen"><div><div class="eyebrow">Marchés</div><h1>Les vraies valeurs</h1></div>'+
+     '<div class="seg" role="group" aria-label="Vue"><button data-mview="reel" aria-pressed="true">Catalogue réel</button><button data-mview="sim" aria-pressed="false">Entraînement</button></div>'+
+     '<label class="field"><span class="eyebrow">Catalogue Trading 212 · '+(realLoaded?nf0.format(REAL.length):'17 213')+' actions et ETF</span><input class="search" id="rsearch" type="search" placeholder="LVMH, Apple, AAPL, code ISIN…" value="'+esc(rq)+'" autocomplete="off"></label>'+
+     '<div class="chips" role="group" aria-label="Zones">'+zones.map(function(z){return '<button class="chip" data-zone="'+z+'" aria-pressed="'+(z===rzone)+'">'+z+'</button>'}).join('')+'</div>'+
+     '<div class="list" id="rlist">'+realRows()+'</div>'+
+     '<p class="note">Catalogue Trading 212 du 17 octobre 2026. Cours en direct pas encore branchés.</p></div>';
+  }
+  var cats=['Mes valeurs','ETF','Actions','Obligations','Matières'];
+  var pool=mcat==='Mes valeurs'?ASSETS.filter(function(a){return a.real}):ASSETS.filter(function(a){return a.cat===mcat&&!a.real});
+  var rows=pool.map(function(a){var c=chg(a);return '<button class="item" data-asset="'+esc(a.sym)+'">'+(a.real?'<div class="tk">'+esc(a.tk||'')+'</div>':'')+'<div class="grow"><div class="t">'+esc(a.name)+'</div><div class="s">'+esc(a.fee)+'</div></div><div style="text-align:right"><div class="num" style="font-weight:600">'+eur(a.p)+'</div><div class="num '+(c>=0?'up':'down')+'" style="font-size:12px;font-weight:600">'+pct(c)+'</div></div></button>'}).join('')||'<div class="item"><div class="grow"><div class="t">Aucune valeur réelle pour l’instant</div><div class="s">Cherche une action ou un ETF ci-dessus pour t’entraîner dessus.</div></div></div>';
+  return '<div class="screen"><div><div class="eyebrow">Marchés</div><h1>Entraînement</h1><div class="note">Entraîne-toi avec ton argent fictif sur les mêmes 17 213 actions et ETF que ton portefeuille réel, ou sur des actifs simulés.</div></div>'+
+   '<div class="seg" role="group" aria-label="Vue"><button data-mview="reel" aria-pressed="false">Catalogue réel</button><button data-mview="sim" aria-pressed="true">Entraînement</button></div>'+
+   '<label class="field"><span class="eyebrow">S’entraîner sur une vraie valeur</span><input class="search" id="tsearch" type="search" placeholder="Apple, LVMH, CW8, code ISIN…" value="'+esc(tq)+'" autocomplete="off"></label>'+
+   '<div class="list" id="tlist"'+(tq?'':' hidden')+'>'+trainRows()+'</div>'+
+   '<div class="chips" role="group" aria-label="Catégories">'+cats.map(function(c){return '<button class="chip" data-cat="'+c+'" aria-pressed="'+(c===mcat)+'">'+c+'</button>'}).join('')+'</div>'+
+   '<div class="list" data-live="mlist">'+rows+'</div></div>';
+}
+var tq='';
+function trainRows(){
+  if(!tq.trim())return '';
+  if(!realLoaded)return '<div class="item"><div class="grow"><div class="t">Chargement du catalogue…</div></div></div>';
+  var R=searchReal(tq,'Tout',25);
+  if(!R.total)return '<div class="item"><div class="grow"><div class="t">Aucun résultat</div></div></div>';
+  return R.list.map(function(r){var has=!!BY[r.key];return '<button class="item" data-train="'+esc(r.key)+'"><div class="tk">'+esc(r.t)+'</div><div class="grow"><div class="t">'+esc(r.name)+'</div><div class="s">'+(r.etf?'ETF':'Action')+' · '+esc(r.place)+'</div></div>'+(has?'<span class="badge acc">Suivie</span>':'<span class="badge">S’entraîner</span>')+'</button>'}).join('');
+}
+function trainSheet(key){
+  if(BY[key]){renderAssetSheet(key);return}
+  var r=RBY[key];if(!r)return;
+  sheet('<div class="row"><div class="tk" style="width:56px;height:48px;font-size:12px">'+esc(r.t)+'</div><div style="flex:1;min-width:0"><div class="eyebrow">'+(r.etf?'ETF':'Action')+' · '+esc(r.place)+'</div><h2>'+esc(r.name)+'</h2></div><button class="btn ghost small" data-close="1">Fermer</button></div>'+
+   '<form class="card" id="trainForm"><h3>Point de départ de l’entraînement</h3><div class="note">Indique le cours actuel de cette valeur, en euros, tel que l’affiche ton courtier. L’entraînement simulera ensuite ses variations à partir de ce prix.</div>'+
+   '<div class="field"><label for="trp">Cours actuel en €</label><input type="number" id="trp" min="0" step="any" inputmode="decimal" required></div>'+
+   '<button class="btn" type="submit">Commencer l’entraînement</button></form>'+
+   '<p class="note">Dans l’app finale, le vrai cours s’affichera automatiquement grâce au flux de cotations.</p>');
+  $('#trainForm').addEventListener('submit',function(e){e.preventDefault();var p=parseFloat($('#trp').value);if(!(p>0)){toast('Indique un cours supérieur à 0');return}
+    addTrainAsset(r.key,r.name,r.etf,p,r.t);S.simRef[r.key]={n:r.name,e:r.etf?1:0,p:p,t:r.t,c:r.cur,i:r.isin,pc:r.pc};save();renderAssetSheet(r.key)});
+}
+function realTotals(){var v=0,c=0,missing=0;S.real.forEach(function(l){if(l.cur>0){v+=l.q*l.cur;c+=l.q*l.pru}else{missing++}});return {v:v,c:c,g:v-c,missing:missing}}
+function pfStats(){var T=realTotals(),L=S.real.filter(function(l){return l.cur>0}),w=L.map(function(l){var r=RBY[l.key]||{};return {n:r.name||l.name,t:r.t||l.t,isin:r.isin||'',etf:!!r.etf,zone:r.zone||'',sector:/·/.test(r.sector||'')?'':(r.sector||''),cur:r.cur||'',v:l.q*l.cur,pr:l.pru>0?(l.cur/l.pru-1)*100:0}}).sort(function(a,b){return b.v-a.v});
+  w.forEach(function(x){x.w=T.v?x.v/T.v:0});var etf=w.reduce(function(a,x){return a+(x.etf?x.w:0)},0),zones={};w.forEach(function(x){if(x.zone)zones[x.zone]=(zones[x.zone]||0)+x.w});
+  return {T:T,w:w,top:w[0]||null,etf:etf,zones:zones}}
+var PFEU=/^(FR|DE|NL|IT|ES|BE|IE|LU|FI|AT|PT|GB|CH|SE|DK|NO|JE|GG|IM|PL|GR)/,PFAS=/^(JP|CN|HK|KR|TW|SG|IN|AU|NZ)/,PFNA=/^(US|CA|BM|KY)/;
+function pfRegion(x){var n=x.n||'';if(x.etf){if(/all[- ]?world|acwi|msci world|ftse world|monde|global/i.test(n))return {'Amérique du Nord':0.68,'Europe':0.17,'Asie':0.10,'Autres':0.05};
+    if(/s&p|nasdaq|usa|u\.s\.|dow jones|russell/i.test(n))return {'Amérique du Nord':1};if(/europe|stoxx|cac|dax|euro|msci emu|ftse 100|uk /i.test(n))return {'Europe':1};
+    if(/emerging|émergent|china|chine|india|inde|japan|japon|asia|asie|pacific/i.test(n))return {'Asie':1};return {'Amérique du Nord':0.5,'Europe':0.5}}
+  var c=(x.isin||'').slice(0,2);return PFNA.test(c)?{'Amérique du Nord':1}:PFEU.test(c)?{'Europe':1}:PFAS.test(c)?{'Asie':1}:{'Autres':1}}
+function pfBroad(x){return x.etf&&/all[- ]?world|acwi|msci world|ftse world|s&p 500|stoxx 600|msci europe|emerging markets|core msci|monde/i.test(x.n||'')}
+function pfSpec(x){return /bitcoin|ethereum|crypto|solana|cardano|ripple|xrp|leverag|levier|\b[2-5]x\b|short|ultra|daily|turbo|ether\b/i.test(x.n||'')}
+function pfScore(st){var w=st.w;if(!w.length)return null;var it=[],tw=function(f){return w.reduce(function(a,x){return a+(f(x)?x.w:0)},0)};
+  // 1. concentration : nombre de lignes « effectif », un ETF large compte comme une vingtaine de titres
+  var hhi=w.reduce(function(a,x){return a+x.w*x.w/(pfBroad(x)?20:1)},0),eff=hhi?1/hhi:0,top=w.filter(function(x){return !pfBroad(x)}).sort(function(a,b){return b.w-a.w})[0],tp=top?top.w:0;
+  var s1=Math.min(25,eff/12*25);if(tp>0.25)s1*=0.7;it.push(['Concentration',s1,25,tp>0.25?'« '+top.n+' » pèse '+amfPct(tp)+' % : au-delà de 20 à 25 % sur un seul titre, un accident sur ce titre fait mal à tout le portefeuille.':'Équivaut à environ '+nf0.format(Math.max(1,eff))+' lignes indépendantes. Aucun titre isolé ne dépasse 25 %.']);
+  // 2. géographie
+  var rg={};w.forEach(function(x){var r=pfRegion(x);for(var k in r)rg[k]=(rg[k]||0)+r[k]*x.w});var mk=Object.keys(rg).sort(function(a,b){return rg[b]-rg[a]})[0],mr=rg[mk]||0;
+  var s2=mr<=0.5?20:mr<=0.7?16:mr<=0.85?11:mr<=0.95?6:3;it.push(['Répartition géographique',s2,20,Object.keys(rg).sort(function(a,b){return rg[b]-rg[a]}).map(function(k){return k+' '+amfPct(rg[k])+' %'}).join(' · ')+(mr>0.85?'. Presque tout dépend d’une seule région.':'.')]);
+  // 3. socle indiciel (approche cœur-satellite)
+  var br=tw(pfBroad),s3=br>=0.6?20:br>=0.4?16:br>=0.2?11:br>0?7:3;it.push(['Socle en ETF larges',s3,20,amfPct(br)+' % en ETF très diversifiés. Les investisseurs de long terme gardent souvent 60 % ou plus en « cœur » indiciel, et le reste en titres choisis.']);
+  // 4. produits spéculatifs
+  var sp=tw(pfSpec),s4=sp===0?15:sp<=0.05?12:sp<=0.15?7:2;it.push(['Produits spéculatifs',s4,15,sp?amfPct(sp)+' % en cryptoactifs, produits à levier ou inversés. Au-delà de 5 à 10 %, une chute brutale pèse lourd.':'Aucun produit à levier ni cryptoactif.']);
+  // 5. change
+  var fx=tw(function(x){return x.cur&&x.cur!=='EUR'}),s5=fx<=0.4?10:fx<=0.7?7:4;it.push(['Risque de change',s5,10,amfPct(fx)+' % coté hors euro. Pas un défaut en soi, mais les variations du dollar s’ajoutent à celles des actions.']);
+  // 6. suivi des pertes
+  var lo=tw(function(x){return x.pr<=-25}),s6=lo===0?10:lo<=0.1?7:3;it.push(['Lignes en forte perte',s6,10,lo?amfPct(lo)+' % du portefeuille perd plus de 25 %. Demande-toi si la raison de l’achat tient toujours.':'Aucune ligne ne perd plus de 25 % depuis l’achat.']);
+  var tot=it.reduce(function(a,x){return a+x[1]},0);return {items:it,score:Math.round(tot),note:Math.round(tot)/10}}
+function pfLabel(n){return n>=8?['Très bien construit','var(--up)']:n>=6?['Solide','var(--up)']:n>=4?['À rééquilibrer','var(--warn)']:['Très concentré','var(--down)']}
+function screenReel(){var T=realTotals(),st=pfStats();
+  var lines=S.real.map(function(l,i){var r=RBY[l.key]||{t:l.t||'?',name:l.name,place:''},val=l.cur>0?l.q*l.cur:null,pr=l.cur>0&&l.pru>0?(l.cur/l.pru-1)*100:null;
+    return '<button class="item" data-line="'+i+'"><div class="tk">'+esc(r.t)+'</div><div class="grow"><div class="t">'+esc(r.name)+'</div><div class="s num">'+nf2.format(l.q)+' × PRU '+eur(l.pru)+'</div></div><div style="text-align:right">'+(val!==null?'<div class="num" style="font-weight:600">'+eur(val)+'</div><div class="num '+(pr>=0?'up':'down')+'" style="font-size:12px;font-weight:600">'+pct(pr)+'</div>':'<span class="badge">Cours à saisir</span>')+'</div></button>'}).join('');
+  var head='<div class="hdr"><div><div class="sub">'+(S.t212?'Trading 212 connecté':'Ton vrai portefeuille')+'</div><h1>Portefeuille</h1></div></div>';
+  var connect='<button class="card pfconn" data-t212="0"><div class="row"><h3>Connecter Trading 212</h3><span class="badge acc">2 minutes</span></div><div class="note">Tes positions et prix de revient arrivent tout seuls, en lecture seule : l’app ne peut ni acheter ni vendre.</div></button>'+
+   '<div class="grid2"><button class="btn small ghost" data-go-real="1">+ Ajouter à la main</button><label class="btn small ghost" for="csvIn" style="cursor:pointer">Importer un relevé</label></div><input type="file" id="csvIn" accept=".csv,text/csv,text/plain" hidden>'+
+   '<div class="note" style="text-align:center">Autres courtiers et banques (PEA, assurance-vie) : bientôt.</div>';
+  if(!S.real.length)return '<div class="screen">'+head+'<div class="card pfempty"><div class="pico big">📈</div><div><b>Vois tout ton portefeuille au même endroit</b><div class="note">Connecte ton courtier : l’IA analyse ta diversification et ce que l’actualité du moment change pour tes placements.</div></div></div>'+connect+'</div>';
+  var chips=st.top?'<div class="pfchips"><span><b>'+S.real.length+'</b> ligne'+(S.real.length>1?'s':'')+'</span><span>Plus grosse ligne <b>'+amfPct(st.top.w)+' %</b></span><span>ETF <b>'+amfPct(st.etf)+' %</b></span></div>':'';
+  var ps=pfScore(st),pl=ps?pfLabel(ps.note):null;
+  var note=ps?'<div class="card pfnote"><div class="scorehead">'+ring(ps.score/100,76,8,'<span class="num" style="font-size:20px">'+nf1.format(ps.note)+'</span><small>/10</small>',pl[1])+'<div><h3>Note de ton portefeuille</h3><div class="badge" style="color:'+pl[1]+'">'+pl[0]+'</div><div class="note">6 critères d’investisseur</div></div></div>'+more('pfcrit','Voir le détail des critères',ps.items.slice().sort(function(a,b){return a[1]/a[2]-b[1]/b[2]}).slice(0,1).map(function(x){return 'Point faible : '+x[0].charAt(0).toLowerCase()+x[0].slice(1)}).join(''),scoreRows(ps.items))+'</div>':'';
+  var ai='<div class="card pfai"><div class="row"><h3>Analyse de ton portefeuille</h3><span class="badge acc">IA</span></div><div class="note">Diversification, risques, et ce que l’actualité du moment change pour tes lignes.</div>'+
+   '<div class="ai" id="pfOut"'+(S.pfAI?'':' hidden')+'>'+(S.pfAI?mdLite(S.pfAI.text):'')+'</div>'+(S.pfAI?'<div class="note">Analyse du '+esc(S.pfAI.d)+'</div>':'')+qNote('coach')+'<button class="btn" data-pfai="1">'+(S.pfAI?'Refaire l’analyse':'Analyser mon portefeuille')+'</button></div>';
+  return '<div class="screen">'+head+
+   '<div class="card hero"><div class="eyebrow">Valeur actuelle</div><div class="big num">'+eur(T.v)+'</div><div class="num" style="font-weight:600;color:var(--'+(T.g>=0?'up':'down')+')">'+(T.g>=0?'+':'−')+eur(Math.abs(T.g))+(T.c?' ('+pct(T.g/T.c*100)+')':'')+' de plus-value latente</div>'+(T.missing?'<div class="note">'+T.missing+' ligne'+(T.missing>1?'s':'')+' sans cours actuel, non comptée'+(T.missing>1?'s':'')+'.</div>':'')+chips+'</div>'+
+   note+ai+
+   (S.real.some(function(l){return l.demo})?'<div class="lockrow">Lignes d’exemple, pas ton vrai compte · <button class="lnk" data-cleardemo="1">Les supprimer</button></div>':'')+
+   '<div class="sec-h"><h2>Mes lignes</h2></div><div class="list">'+lines+'</div>'+
+   more('pfsrc','Ajouter ou synchroniser',S.t212?'Trading 212 connecté':'Trading 212, ajout manuel, import CSV',connect)+
+   '<p class="note">Tes lignes restent dans ton compte. Analyse pédagogique, pas un conseil en investissement.</p></div>';
+}
+function pfAnalyse(){var out=$('#pfOut');if(!out)return;if(!qLeft('coach')){qWall('coach');return}
+  var st=pfStats();if(!st.w.length){toast('Indique le cours actuel de tes lignes pour les analyser');return}
+  var news=(NEWSDATA&&NEWSDATA.items||[]).slice(0,10).map(function(n){return '- '+n.cat+' ('+String(n.date).slice(0,10)+') : '+n.title+(n.tags&&n.tags.length?' ['+n.tags.join(', ')+']':'')}).join('\n');
+  var pf=st.w.map(function(x){return '- '+x.n+' ('+x.t+(x.etf?', ETF':', action')+(x.zone?', '+x.zone:'')+(x.sector?', '+x.sector:'')+(x.cur?', cotée en '+x.cur:'')+') : '+amfPct(x.w)+' % du portefeuille, '+(x.pr>=0?'+':'')+nf1.format(x.pr)+' % depuis l’achat'}).join('\n');
+  var ps=pfScore(st),notes=ps?'\n\nNote calculée par l’app : '+nf1.format(ps.note)+'/10 ('+ps.items.map(function(x){return x[0]+' '+nf0.format(x[1])+'/'+x[2]}).join(', ')+'). Explique en une phrase le critère le plus faible.':'';
+  var prompt='Tu es l’analyste pédagogique de l’app Finly, en français, pour un jeune investisseur particulier. Tu tutoies, tu es clair et concret.\n\nSon portefeuille réel ('+eur0(st.T.v)+', plus-value latente '+eur0(st.T.g)+') :\n'+pf+notes+'\n\nActualités du moment publiées dans l’app :\n'+news+
+   '\n\nRédige en 220 mots maximum, avec ces titres : « ## En bref » (2 phrases), « ## Diversification » (concentration, zones, secteurs, devises, part d’ETF ; signale toute ligne au-delà de 20 à 25 %), « ## Ce que l’actu change pour toi » (relie seulement les actualités qui concernent vraiment ses lignes ou leurs secteurs ; si aucune ne les concerne, dis-le), « ## Points de vigilance » (2 à 3 puces). Règles : ne recommande jamais d’acheter, vendre ou conserver un titre précis, ne donne aucun objectif de cours ; explique les mécanismes et les risques. Si une information te manque, dis-le plutôt que d’inventer. Termine par une phrase rappelant que ce n’est pas un conseil en investissement.';
+  out.hidden=false;out.innerHTML='<p class="muted">L’IA analyse ton portefeuille…</p>';
+  samplePromise.then(function(sample){if(!sample){out.innerHTML='<p>L’analyse IA n’est pas disponible ici.</p>';return}
+    sample(prompt,{cache:false,onText:function(p){out.innerHTML=mdLite(p.text)}}).then(function(r){out.innerHTML=mdLite(r.text);S.pfAI={text:r.text,d:new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long'})};qUse('coach');save()}).catch(function(e){out.innerHTML=(e&&e.code==='rate_limited')?'<p>L’IA est très sollicitée, réessaie dans un moment.</p>':'<p>L’analyse n’a pas pu être faite. Réessaie.</p>'})})}
+document.addEventListener('click',function(e){if(e.target.closest('[data-pfai]'))pfAnalyse();if(e.target.closest('[data-bscore]'))bScoreSheet()});
+
+function screenPortefeuille(){
+  if(S.pview==='reel')return screenReel();
+  var tv=totalValue(),g=gains(),w=weights(),pv=posValue(),ti=tierInfo(g),dsc=discipline();
+  var cols=['var(--acc)','#4F9DFF','#F5B841','#E6EAF0','#FF8A5B','#A57CFF'];
+  var cats={};for(var s in S.pos){var c=BY[s].cat;cats[c]=(cats[c]||0)+S.pos[s].q*BY[s].p}
+  var ck=Object.keys(cats),alloc=ck.map(function(c,i){return '<i style="flex:'+cats[c]+';background:'+cols[i%cols.length]+'"></i>'}).join('');
+  var leg=ck.map(function(c,i){return '<span style="display:inline-flex;align-items:center;gap:6px;margin-right:12px"><i style="width:10px;height:10px;border-radius:3px;display:inline-block;background:'+cols[i%cols.length]+'"></i>'+c+' · '+nf0.format(cats[c]/pv*100)+' %</span>'}).join('');
+  var pos=Object.keys(S.pos).map(function(s){var p=S.pos[s],a=BY[s],v=p.q*a.p,r=(a.p/p.c-1)*100;return '<button class="item" data-asset="'+s+'"><div class="grow"><div class="t">'+esc(a.name)+'</div><div class="s num">'+nf2.format(p.q)+' parts · '+nf0.format((w[s]||0)*100)+' %</div></div><div style="text-align:right"><div class="num" style="font-weight:600">'+eur(v)+'</div><div class="num '+(r>=0?'up':'down')+'" style="font-size:12px;font-weight:600">'+pct(r)+'</div></div></button>'}).join('');
+  var m=S.monthly, proj=function(rate,yrs){var mr=rate/12,n=yrs*12;return tv*Math.pow(1+rate,yrs)+(mr?m*(Math.pow(1+mr,n)-1)/mr:m*n)};
+  var nxt=ti.next, prog=nxt?Math.max(0,Math.min(100,g/nxt[0]*100)):100;
+  return '<div class="screen"><div><div class="eyebrow">Portefeuille</div><h1>Mon portefeuille fictif</h1></div>'+
+   '<div class="seg" role="group" aria-label="Portefeuille"><button data-pview="fictif" aria-pressed="true">Fictif</button><button data-pview="reel" aria-pressed="false">Réel</button></div>'+
+   '<div class="card hero"><div class="eyebrow">10 000 € de départ</div><div class="big num" data-live="total">'+eur(tv)+'</div><div class="num" style="font-weight:600" data-live="gain">'+(g>=0?'+':'−')+eur(Math.abs(g))+' ('+pct(g/100)+')</div></div>'+
+   '<div class="grid2"><div class="mini"><div class="n">Liquidités</div><div class="v num">'+eur(S.cash)+'</div></div><div class="mini"><div class="n">Investi</div><div class="v num">'+eur(pv)+'</div></div></div>'+
+   (ck.length?'<div class="card"><div class="eyebrow">Répartition</div><div class="alloc">'+alloc+'</div><div class="note">'+leg+'</div></div>':'')+
+   '<div class="row"><span class="eyebrow">Positions</span><button class="btn small" data-go="marches">+ Acheter</button></div>'+
+   (pos?'<div class="list">'+pos+'</div>':'<div class="card"><h3>Aucune position</h3><div class="note">Va dans Marchés, choisis un actif et achète-le avec ton argent fictif. Ton premier achat allume le côté « Pratiquer » de l’Hexagone.</div></div>')+
+   (S.orders.length?'<div class="eyebrow">Ordres en attente</div><div class="list">'+S.orders.map(function(o,i){var a=BY[o.sym]||{name:o.sym,p:0};return '<div class="item"><div class="grow"><div class="t">'+(o.side==='achat'?'Achat':'Vente')+' · '+esc(a.name)+'</div><div class="s num">'+nf2.format(o.q)+' à '+eur(o.limit)+' max · cours actuel '+eur(a.p)+'</div></div><button class="btn small ghost" data-cancel="'+i+'">Annuler</button></div>'}).join('')+'</div>':'')+
+   ((S.trades||[]).some(function(t){return t.thesis})?journalCard():'')+more('pf','Frais, discipline et projection','Ce que te coûtent tes ordres et ce que deviendrait ton épargne',(function(){var f=S.fees,tot=f.brok+f.fx+f.ttf+f.spread;return '<div class="card"><div class="row"><span class="eyebrow">Frais payés depuis le départ</span><span class="num" style="font-weight:700">'+eur(tot)+'</span></div><div class="row note"><span>Courtage</span><span class="num">'+eur(f.brok)+'</span></div><div class="row note"><span>Frais de change</span><span class="num">'+eur(f.fx)+'</span></div><div class="row note"><span>Taxe sur les transactions financières</span><span class="num">'+eur(f.ttf)+'</span></div><div class="row note"><span>Écart achat-vente (estimé)</span><span class="num">'+eur(f.spread)+'</span></div><div class="note">Courtier simulé : <strong>'+BROKERS[S.broker].n+'</strong>. Tu peux en changer dans chaque ordre pour comparer.</div></div>'})()+
+   '<div class="card"><div class="row"><span class="eyebrow">Score de discipline</span><span class="big num" style="font-size:24px">'+dsc.score+'<span class="muted" style="font-size:14px"> / 100</span></span></div><div class="bar"><i style="width:'+dsc.score+'%"></i></div>'+dsc.items.map(function(i){return '<div class="row note"><span>'+i[0]+'</span><span class="num">'+i[1]+'</span></div>'}).join('')+'<div class="note">Un palier de patrimoine n’est validé qu’à partir de 70.</div></div>'+
