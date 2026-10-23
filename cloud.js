@@ -146,7 +146,7 @@
     login: function (email, password) {
       return client().then(function (sb) {
         return sb.auth.signInWithPassword({ email: email, password: password }).then(function (r) {
-          if (r.error) throw new Error(/invalid/i.test(r.error.message) ? "E-mail ou mot de passe incorrect." : /banned/i.test(r.error.message) ? "Ce compte est bloqué." : "Connexion impossible, réessaie.");
+          if (r.error) throw new Error(/invalid/i.test(r.error.message) ? "E-mail ou mot de passe incorrect. Pas encore de compte ? Reviens en arrière et touche « Créer un compte avec e-mail et mot de passe »." : /banned/i.test(r.error.message) ? "Ce compte est bloqué." : "Connexion impossible, réessaie.");
           try { localStorage.setItem("finly-adopt", "1"); } catch (e) {}
           return r.data && r.data.user;
         });
@@ -165,7 +165,11 @@
     // Connexion avec Google (le compte invité est relié à Google quand c'est possible, pour garder la progression)
     google: function () {
       var back = location.origin + location.pathname;
-      return client().then(function (sb) {
+      // on vérifie d'abord que Google est activé dans Supabase (sinon on resterait bloqué sur une page d'erreur)
+      return fetch(SUPABASE_URL + "/auth/v1/settings", { headers: { apikey: SUPABASE_KEY } }).then(function (r) { return r.json(); }).then(function (st) {
+        if (!(st && st.external && st.external.google)) throw new Error("La connexion Google n'est pas encore activée. Utilise ton e-mail en attendant.");
+        return client();
+      }).then(function (sb) {
         try { localStorage.setItem("finly-adopt", "1"); } catch (e) {}
         return sb.auth.getSession().then(function (r) {
           var u = r.data && r.data.session && r.data.session.user;
