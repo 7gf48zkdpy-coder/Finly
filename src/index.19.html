@@ -1,0 +1,47 @@
+  if(t.dataset.exam){startQuiz({kind:'exam',id:+t.dataset.exam});return}
+  if(t.dataset.theme){S.theme=t.dataset.theme;applyTheme(S.theme);render();return}
+  if(t.dataset.reset==='ask'){$('#resetZone').innerHTML='<div class="grid2"><button class="btn" data-reset="yes" style="background:var(--down);color:#fff">Tout effacer</button><button class="btn ghost" data-reset="no">Annuler</button></div>';return}
+  if(t.dataset.reset==='no'){render();return}
+  if(t.dataset.reset==='yes'){var th=S.theme;S={admin:false,broker:'t212',orders:[],fees:{brok:0,fx:0,ttf:0,spread:0},theme:th,lg:{week:'',league:0,xp:0,streak:0,lastDay:'',last:null},real:[],simRef:{},mview:'reel',pview:'fictif',cash:10000,pos:{},trades:[],passed:{},quiz:{},rank:1,skills:{},monthly:200,examFails:0,examUntil:0,examSigs:[]};save();render();toast('Progression réinitialisée');return}
+});
+document.addEventListener('change',function(e){if(e.target.id==='ttsSel'){S.ttsVoice=e.target.value;save();ttsTest();return}if(e.target.id==='ttsRate'){S.ttsRate=+e.target.value;save();ttsTest();return}if(e.target.id==='adRank'){S.rank=+e.target.value;save();render();toast('Rang modifié')}if(e.target.id==='adLeague'){S.lg.league=+e.target.value;save();render();toast('Ligue modifiée')}});
+document.addEventListener('input',function(e){if(e.target.id==='ttsRate'){var rv=$('#ttsRateV');if(rv)rv.textContent=nf1.format(+e.target.value)+'×';return}
+  if(e.target.id==='monthly'){S.monthly=+e.target.value;save();var tv=totalValue(),m=S.monthly;$('#mval').textContent=eur0(m);
+    var proj=function(rate){var mr=rate/12,n=120;return tv*Math.pow(1+rate,10)+m*(Math.pow(1+mr,n)-1)/mr};
+    $('#projbox').innerHTML=[['Prudent',.03],['Central',.06],['Optimiste',.08]].map(function(s){return '<div class="mini"><div class="n">'+s[0]+' · '+(s[1]*100)+' %</div><div class="v num">'+eur0(proj(s[1]))+'</div><div class="note">à 10 ans</div></div>'}).join('')}
+});
+setInterval(function(){var cd=$('#cd');if(cd){var id=null;for(var k in S.quiz){if(S.quiz[k].until>now())id=k}if(id){var s=Math.ceil((S.quiz[id].until-now())/1000);cd.textContent=s+' s'}else{var sh=$('.sheet');if(sh)closeSheet();render();toast('Tu peux retenter le quiz')}}},1000);
+
+/* ---------- Finly : compte e-mail (pour retrouver sa progression sur un autre téléphone) ---------- */
+function finlyAcctBox(){var me=ACC.me||{};if(ACC.state!=='ok'&&ACC.state!=='sync')return '';
+  if(me.email)return '<div class="note">Compte : '+esc(me.email)+'</div><div class="grid2"><button class="btn small ghost" data-facct="pw">Mot de passe</button><button class="btn small ghost" data-facct="out">Se déconnecter</button></div>';
+  return '<div class="note">Crée ton compte (e-mail + mot de passe) pour retrouver ton budget, tes papiers et ton plan sur un autre téléphone.</div><div class="grid2"><button class="btn small" data-facct="new">Créer mon compte</button><button class="btn small ghost" data-facct="in">Se connecter</button></div>'}
+function finlyAcctSheet(kind){var t={new:'Créer mon compte',in:'Se connecter',pw:'Nouveau mot de passe'}[kind];
+  sheet('<div class="sheet-top"><span class="k">'+t+'</span><button class="xbtn" data-close="1" aria-label="Fermer">✕</button></div>'+
+   (kind==='new'?'<p class="note" style="font-size:15px">Ta progression actuelle est gardée et rattachée à ce compte.</p>':kind==='in'?'<p class="note" style="font-size:15px">La progression de ton compte remplacera celle de cet appareil.</p>':'')+
+   '<form id="faForm" class="field">'+(kind!=='pw'?'<label for="faMail">E-mail</label><input type="text" id="faMail" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" style="height:48px;border-radius:12px;border:1px solid var(--sep);background:var(--card);padding:0 12px;font-size:16px">':'')+
+   '<label for="faPw">Mot de passe</label><input type="password" id="faPw" autocomplete="'+(kind==='in'?'current-password':'new-password')+'" style="height:48px;border-radius:12px;border:1px solid var(--sep);background:var(--card);padding:0 12px;font-size:16px">'+
+   '<span class="note" id="faErr">'+(kind==='in'?'':'8 caractères minimum')+'</span><button class="btn" type="submit" id="faBtn">'+t+'</button></form>');
+  $('#faForm').addEventListener('submit',function(e){e.preventDefault();var m=$('#faMail')?$('#faMail').value.trim():'',p=$('#faPw').value,er=$('#faErr'),b=$('#faBtn');
+    var bad=function(x){er.textContent=x;er.style.color='var(--down)';b.disabled=false};
+    if(kind!=='pw'&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m)){bad('Adresse e-mail invalide.');return}
+    if(kind!=='in'&&p.length<8){bad('Mot de passe : 8 caractères minimum.');return}
+    b.disabled=true;er.textContent='Un instant…';er.style.color='';
+    var A=window.FinlyCloud.account,pr=kind==='new'?A.create(m,p):kind==='in'?A.login(m,p):A.password(p);
+    pr.then(function(){if(kind==='in'){location.reload();return}
+      closeSheet();toast(kind==='new'?'Compte créé : ta progression est rattachée':'Mot de passe modifié');
+      if(kind==='new')window.FinlyCloud.use('user').then(function(u){return Promise.all([u.me(),u.isOwner()])}).then(function(x){ACC.me=x[0];ACC.owner=!!x[1];render()}).catch(function(){render()})
+    }).catch(function(x){bad((x&&x.message)||'Erreur, réessaie.')})})}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-facct]');if(!b)return;var k=b.dataset.facct;
+  if(k==='out'){if(!confirm('Te déconnecter ? Ta progression reste sur ton compte ; cet appareil repartira de zéro.'))return;
+    window.FinlyCloud.account.logout().then(function(){try{localStorage.removeItem(KEY);localStorage.removeItem('finly-adopt')}catch(er){}location.reload()});return}
+  finlyAcctSheet(k)});
+
+/* ---------- start ---------- */
+lastJson=stateSig();applyTheme(S.theme); render();if(TAMPER)setTimeout(function(){toast('Progression modifiée hors de l’app détectée : elle a été remise à zéro')},800); rotatePill(); initAccount();
+setInterval(function(){if(ACC.state==='ok'){statsPublish()}},60000);
+setInterval(rotatePill,6000);
+})();
+</script>
+
+</body></html>
