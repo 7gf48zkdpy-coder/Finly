@@ -1,0 +1,188 @@
+  bSheet(d?'Modifier la dette':'Nouvelle dette','<div class="field"><label for="bfK">Type</label><select id="bfK" class="search"><optgroup label="Retards et impayés">'+grp(function(k){return BDEBT[k][2]||['recouv','telecom','fractionne','decouvert'].indexOf(k)>=0})+'</optgroup><optgroup label="Crédits et prêts">'+grp(function(k){return !BDEBT[k][2]&&['recouv','telecom','fractionne','decouvert'].indexOf(k)<0})+'</optgroup></select></div><div class="ftip" id="bfKN"'+(BDEBT[k0][3]?'':' hidden')+'>'+esc(BDEBT[k0][3])+'</div>'+bField('bfL','Nom',d?d.l:'','text',' placeholder="Ex. : prêt voiture, amende radar"')+
+   '<div class="btxrow">'+bField('bfB','Reste à payer (€)',d?d.bal:'')+bField('bfR','Taux annuel (%)',d?d.rate:BDEBT[k0][1])+'</div>'+bField('bfP','Remboursé par mois (€, 0 si rien pour l’instant)',d?d.pay:'')+'<div class="note">Le taux figure sur ton offre de prêt ou ton relevé (TAEG). Pour un impayé sans intérêts, laisse 0.</div>',d?'data-bdel="debt"':'')}
+function bEditGoal(id,preset){var b=bud(),g=id?b.goals.filter(function(x){return x.id===id})[0]:null;if(!g){var p=(preset||'projet|Projet').split('|');g={id:null,t:p[0],l:p[1],target:'',saved:0,date:bmonth(new Date(Date.now()+365*864e5)),monthly:'',years:15}}
+  BED={kind:'goal',id:g.id,t:g.t};
+  var body=bField('bfL','Nom',g.l,'text')+(g.t==='investir'?'<div class="btxrow">'+bField('bfM2','Montant par mois (€)',g.monthly)+bField('bfY','Pendant (années)',g.years||15,'number',' step="1"')+'</div><div class="note">Pour le long terme seulement (8 ans ou plus), et une fois le matelas et les dettes chères réglés.</div>':
+   '<div class="btxrow">'+bField('bfT','Montant visé (€)',g.target)+bField('bfS','Déjà mis de côté (€)',g.saved)+'</div><div class="field"><label for="bfD">Pour quand ?</label><input id="bfD" type="month" value="'+esc(g.date)+'"></div>');
+  bSheet(g.id?'Modifier l’objectif':'Nouvel objectif',body,g.id?'data-bdel="goal"':'')}
+function bSave(){var b=bud(),v=function(i){var el=document.getElementById(i);return el?el.value:''};if(!BED)return;
+  if(BED.kind==='exp'){var o={c:v('bfC'),l:v('bfL').trim()||BCAT[v('bfC')].n,a:bnum(v('bfA')),f:v('bfF'),n:Math.max(1,Math.round(bnum(v('bfN'))||1))};if(!(o.a>0)){toast('Indique un montant supérieur à 0');return}
+    if(BED.id){var e=b.exp.filter(function(x){return x.id===BED.id})[0];for(var k in o)e[k]=o[k]}else{o.id=bid();b.exp.push(o)}}
+  if(BED.kind==='inc'){var a=bnum(v('bfA'));if(!(a>0)){toast('Indique un montant supérieur à 0');return}if(BED.id){var i=b.inc.filter(function(x){return x.id===BED.id})[0];i.l=v('bfL').trim()||'Revenu';i.a=a}else b.inc.push({id:bid(),l:v('bfL').trim()||'Revenu',a:a})}
+  if(BED.kind==='debt'){var d={k:v('bfK'),l:v('bfL').trim()||BDEBT[v('bfK')][0],bal:bnum(v('bfB')),rate:bnum(v('bfR')),pay:bnum(v('bfP'))};if(!(d.bal>0)){toast('Indique le montant qui reste à payer');return}
+    if(BED.id){var dd=b.debts.filter(function(x){return x.id===BED.id})[0];for(var k2 in d)dd[k2]=d[k2]}else{d.id=bid();b.debts.push(d)}}
+  if(BED.kind==='goal'){var g=BED.t==='investir'?{t:'investir',l:v('bfL').trim()||'Investir',monthly:bnum(v('bfM2')),years:Math.max(1,Math.round(bnum(v('bfY'))||15))}:{t:'projet',l:v('bfL').trim()||'Projet',target:bnum(v('bfT')),saved:bnum(v('bfS')),date:v('bfD')||bmonth()};
+    if(g.t==='projet'&&!(g.target>0)){toast('Indique le montant visé');return}if(g.t==='investir'&&!(g.monthly>0)){toast('Indique un montant par mois');return}
+    if(BED.id){var gg=b.goals.filter(function(x){return x.id===BED.id})[0];for(var k3 in g)gg[k3]=g[k3]}else{g.id=bid();b.goals.push(g)}}
+  b.demo=0;BED=null;closeSheet();save();render();toast('Enregistré')}
+function bDel(kind){var b=bud(),key={exp:'exp',inc:'inc',debt:'debts',goal:'goals'}[kind];if(!BED||!BED.id)return;b[key]=b[key].filter(function(x){return x.id!==BED.id});b.demo=0;BED=null;closeSheet();save();render();toast('Supprimé')}
+
+/* ----- assistant de démarrage ----- */
+var WZ=[
+ {t:'Ton foyer',s:'Pour calculer ton matelas de sécurité et repérer les aides auxquelles tu as peut-être droit.',foyer:1},
+ {t:'Tes revenus',s:'Tout ce qui arrive sur ton compte, après impôts et cotisations. Laisse vide ce qui ne te concerne pas.',f:[['inc','Salaire net mensuel','inc','m'],['caf','Aides (CAF, APL, prime d’activité…)','inc','m'],['cho','Chômage, indemnités ou retraite','inc','m'],['pa','Pension alimentaire reçue','inc','m'],['inc2','Autres revenus (activité à côté, loyers…)','inc','m'],['prime','Primes ou 13e mois (total par an)','inc','y']]},
+ {t:'Ton logement',s:'Les dépenses fixes de ta maison.',f:[['loyer','Loyer et charges','logement','m'],['tf','Taxe foncière','impots','y'],['elec','Électricité','energie','m'],['gaz','Gaz, fioul ou bois','energie','m'],['eau','Eau','energie','q'],['box','Internet','telecom','m'],['mob','Forfaits mobiles','telecom','m'],['ah','Assurance habitation','assurances','m']]},
+ {t:'Courses et déplacements',s:'Mets ce que tu dépenses en moyenne, à la semaine, au mois ou à l’année comme tu préfères.',f:[['courses','Courses','courses','w'],['fuel','Carburant : prix d’un plein','transport','m','fuel'],['tc','Transports en commun','transport','m'],['peage','Péages et stationnement','transport','m'],['entr','Entretien et réparations du véhicule','transport','y'],['aa','Assurance auto ou moto','assurances','m']]},
+ {t:'Santé, famille et banque',s:'Les dépenses qu’on oublie souvent.',f:[['mut','Mutuelle santé','assurances','m'],['rac','Santé non remboursée (médecin, lunettes…)','sante','m'],['enf','Enfants (garde, cantine, activités)','enfants','m'],['pav','Pension alimentaire versée','enfants','m'],['ani','Animaux','animaux','m'],['ir','Impôt sur le revenu (prélevé)','impots','m'],['bq','Frais bancaires','banque','m']]},
+ {t:'Tes plaisirs et habitudes',s:'Pas de jugement : on cherche juste à y voir clair.',f:[['abo','Abonnements (streaming, sport, applis)','abonnements','m'],['resto','Restaurants, livraisons, sorties','loisirs','m'],['vac','Vacances','loisirs','y'],['shop','Vêtements et shopping','shopping','m'],['cad','Cadeaux et fêtes','autres','y'],['tab','Tabac, vape, alcool','habitudes','m'],['jeu','Jeux d’argent (paris, loto, casino)','habitudes','m']]},
+ {t:'Retards et impayés',s:'Réponds honnêtement : c’est ce qui permet de te proposer le bon ordre de remboursement. Tes réponses restent dans ton compte.',arr:1},
+ {t:'Tes crédits',s:'Crédits en cours auprès d’une banque ou d’un organisme. Laisse vide si tu n’en as pas.',debts:1},
+ {t:'Ton épargne et ta situation',s:'L’argent disponible tout de suite (livrets, compte épargne), sans compter tes placements de long terme.',f:[['safety','Épargne disponible aujourd’hui','safety','m']],stable:1,flags:1}];
+var WZARR=WZ.map(function(x){return !!x.arr}).indexOf(true);
+var WZCRED=['conso','revolving','auto','immo','etudiant','autre'];
+var WZD=null;
+function wzLab(f){return f[2]==='inc'?f[1].replace(' (total par an)','').replace(' mensuel','').replace(/\s*\(.*\)$/,''):f[4]==='fuel'?'Carburant (un plein)':f[1].replace(' (par an)','')}
+function wzOpen(only){var b=bud();WZD={step:only?WZARR:0,only:!!only,v:{},per:{},n:{fuel:2},debts:[],arr:{},flags:{},foyer:b.demo?null:b.foyer,stable:1,keepExp:[],keepInc:[],keepDebts:[]};
+  var fl=b.flags||{};for(var k in fl)WZD.flags[k]=fl[k];
+  if(!only&&!b.demo){WZD.stable=b.stable?1:0;var ue={},ui={};
+    WZ.forEach(function(st){(st.f||[]).forEach(function(f){var L=wzLab(f);
+      if(f[2]==='safety'){if(+b.safety)WZD.v.safety=b.safety;return}
+      if(f[2]==='inc'){var i=b.inc.filter(function(x){return !ui[x.id]&&x.l===L})[0];if(i){ui[i.id]=1;WZD.v[f[0]]=f[3]==='y'?Math.round(i.a*12):i.a}return}
+      var e=b.exp.filter(function(x){return !ue[x.id]&&x.c===f[2]&&x.l===L})[0];if(e){ue[e.id]=1;WZD.v[f[0]]=e.a;WZD.per[f[0]]=e.f;if(f[4]==='fuel')WZD.n.fuel=e.n||1}})});
+    if(!Object.keys(ui).length&&b.inc[0]){ui[b.inc[0].id]=1;WZD.v.inc=b.inc[0].a}
+    WZD.keepExp=b.exp.filter(function(x){return !ue[x.id]});WZD.keepInc=b.inc.filter(function(x){return !ui[x.id]});
+    var ak={};ARRQ.forEach(function(q){ak[q[0]]=1});
+    b.debts.forEach(function(d){if(d.doc)return;if(ak[d.k]&&!WZD.arr[d.k])WZD.arr[d.k]={on:1,bal:d.bal,pay:d.pay||'',l:d.l};else if(WZCRED.indexOf(d.k)>=0)WZD.debts.push({k:d.k,l:d.l,bal:d.bal,rate:d.rate,pay:d.pay});else WZD.keepDebts.push(d)})}
+  wzRender()}
+function bEditSheet(){var b=bud(),c=bCalc(),f=b.foyer,FL=BFLAGS.filter(function(x){return (b.flags||{})[x[0]]}).length;
+  var row=function(act,ic,t,sub){return '<button class="lrow" '+act+'><span class="dot">'+ic+'</span><span style="flex:1;min-width:0"><span class="t" style="display:block">'+t+'</span><span class="s" style="display:block">'+sub+'</span></span><span class="muted">›</span></button>'};
+  sheet('<div class="sheet-top"><span class="k">Ma situation</span><button class="xbtn" data-close="1" aria-label="Fermer">✕</button></div><h2 class="title-xl">Modifier ma situation</h2><div class="note">Tout se modifie à tout moment : ton plan, ton score et tes aides se recalculent tout de suite.</div>'+
+   '<div class="grp">'+
+    row('data-bact="aides"','☺','Mon foyer',f?(f.couple?'En couple':'Seul(e)')+' · '+f.kids+' enfant'+(f.kids>1?'s':'')+' · '+esc((FOY.act.filter(function(x){return x[0]===f.act})[0]||['',''])[1])+' · '+esc((FOY.log.filter(function(x){return x[0]===f.log})[0]||['',''])[1]):'À renseigner')+
+    row('data-btabgo="depenses"','€','Revenus et dépenses',eur0(c.inc)+' de revenus · '+b.exp.length+' dépenses · touche une ligne pour la changer')+
+    row('data-btabgo="dettes"','%','Dettes et crédits',b.debts.length?b.debts.length+' dette'+(b.debts.length>1?'s':'')+' · '+eur0(c.dbal):'Aucune')+
+    row('data-bact="arr"','!','Impayés et situation',FL?FL+' point'+(FL>1?'s':'')+' signalé'+(FL>1?'s':''):'Relances, saisie, fichage, surendettement')+
+    row('data-bact="safety"','◎','Épargne disponible',eur0(b.safety||0)+' · revenus '+(b.stable?'réguliers':'irréguliers'))+
+    row('data-btabgo="objectifs"','★','Objectifs et projets',b.goals.length?b.goals.length+' objectif'+(b.goals.length>1?'s':''):'Aucun')+
+   '</div><div class="card"><h3>Refaire le questionnaire</h3><div class="note">Il reprend tes réponses actuelles : change seulement ce qui a bougé (nouveau travail, déménagement, enfant, dette remboursée…). Ton suivi du mois et tes objectifs sont gardés.</div><button class="btn" data-bact="wizard">Reprendre le questionnaire</button></div>')}
+
+function wzRender(){var st=WZ[WZD.step],body='';
+  if(st.arr){var yes=ARRQ.filter(function(q){return (WZD.arr[q[0]]||{}).on===1}).length;
+    body=ARRQ.map(function(q){var a=WZD.arr[q[0]]||{};return '<div class="wzq'+(a.on===1?' on':'')+'"><div class="wzqh"><span>'+q[1]+'</span><div class="wzyn" role="group" aria-label="'+esc(q[1])+'"><button data-wzarr="'+q[0]+'|1" aria-pressed="'+(a.on===1)+'">Oui</button><button data-wzarr="'+q[0]+'|0" aria-pressed="'+(a.on===0)+'">Non</button></div></div>'+(a.on===1?'<div class="btxrow">'+bField('wza_'+q[0],q[2]||'Montant total dû (€)',a.bal||'')+bField('wzm_'+q[0],'Remboursé par mois (€)',a.pay||'',null,' placeholder="0 si rien"')+'</div>'+(BDEBT[q[0]][2]?'<div class="note" style="color:var(--down)">Dette prioritaire : elle passera avant les crédits dans ton plan.</div>':''):'')+'</div>'}).join('')+'<div class="note">'+(yes?yes+' point'+(yes>1?'s':'')+' à traiter. Ton plan te dira par quoi commencer et qui contacter.':'Si tout est à jour, réponds « Non » ou passe directement à la suite.')+'</div>'}
+  else if(st.foyer){body=bFoyerForm('wzh_',WZD.foyer)}
+  else if(st.debts){body='<div class="grp flat">'+WZD.debts.map(function(d,i){return '<div class="lrow"><span style="flex:1"><span class="t" style="display:block">'+esc(d.l)+'</span><span class="s" style="display:block">'+eur0(d.bal)+' à '+nf1.format(d.rate)+' % · '+eur0(d.pay)+' / mois</span></span><button class="xbtn" data-wzdd="'+i+'" aria-label="Retirer">✕</button></div>'}).join('')+'</div>'+
+    '<div class="wzdebt"><div class="field"><label for="wzK">Type</label>'+bSel('wzK',WZCRED.map(function(k){return [k,BDEBT[k][0]]}),'conso')+'</div><div class="btxrow">'+bField('wzB','Reste dû (€)','')+bField('wzP','Mensualité (€)','')+'</div>'+bField('wzR','Taux (%) si tu le connais','')+'<button class="btn ghost small" data-wzadd="1">Ajouter cette dette</button></div>'}
+  else body=st.f.map(function(f){var id='wz_'+f[0],val=WZD.v[f[0]]||'',per=WZD.per[f[0]]||f[3];
+    if(f[4]==='fuel')return '<div class="wzf"><label for="'+id+'">'+f[1]+'</label><input id="'+id+'" type="number" inputmode="decimal" min="0" step="any" placeholder="0 €" value="'+val+'"><div class="wzn"><label for="wzn_fuel">Combien de pleins ?</label><input id="wzn_fuel" type="number" min="0" step="1" value="'+(WZD.n.fuel||2)+'">'+bSel('wzp_'+f[0],[['w','par semaine'],['m','par mois']],per)+'</div></div>';
+    return '<div class="wzf"><label for="'+id+'">'+f[1]+'</label><div class="btxrow"><input id="'+id+'" type="number" inputmode="decimal" min="0" step="any" placeholder="0 €" value="'+val+'">'+(f[2]==='inc'||f[2]==='safety'?'<span class="wzper">'+(f[3]==='y'?'par an':f[2]==='safety'?'en tout':'par mois')+'</span>':bSel('wzp_'+f[0],Object.keys(BPER).map(function(k){return [k,BPER[k][0]]}),per))+'</div></div>'}).join('')+
+    (st.stable?'<div class="seg" role="group" aria-label="Revenus"><button data-wzst="1" aria-pressed="'+(WZD.stable===1)+'">Revenus réguliers</button><button data-wzst="0" aria-pressed="'+(WZD.stable===0)+'">Revenus irréguliers</button></div>':'')+
+    (st.flags?'<div class="wzflags"><div class="note" style="font-weight:600;color:var(--text)">Coche ce qui te concerne</div>'+BFLAGS.map(function(f){return '<label class="chk"><input type="checkbox" id="wzf_'+f[0]+'"'+(WZD.flags[f[0]]?' checked':'')+'> <span>'+f[1]+'</span></label>'}).join('')+'</div>':'');
+  if(WZD.only)body+='<div class="wzflags"><div class="note" style="font-weight:600;color:var(--text)">Et aussi</div>'+BFLAGS.map(function(f){return '<label class="chk"><input type="checkbox" id="wzf_'+f[0]+'"'+(WZD.flags[f[0]]?' checked':'')+'> <span>'+f[1]+'</span></label>'}).join('')+'</div>';
+  sheet('<div class="sheet-top"><span class="k">'+(WZD.only?'Faire le point':'Étape '+(WZD.step+1)+' sur '+WZ.length)+'</span><button class="xbtn" data-close="1" aria-label="Fermer">✕</button></div><div class="bar"><i style="width:'+(WZD.only?100:(WZD.step+1)/WZ.length*100)+'%"></i></div><h2 class="title-xl" style="font-size:26px">'+st.t+'</h2><div class="note">'+st.s+'</div><div class="wz">'+body+'</div>'+
+   '<div class="row" style="gap:10px">'+(WZD.step&&!WZD.only?'<button class="btn ghost" data-wznav="-1">Retour</button>':'<span></span>')+'<button class="btn" data-wznav="1">'+(WZD.only?'Ajouter à mes dettes':WZD.step===WZ.length-1?'Voir mon plan':'Suivant')+'</button></div>')}
+function wzRead(){var st=WZ[WZD.step];if(st.foyer)WZD.foyer=bFoyerRead('wzh_');if(st.f)st.f.forEach(function(f){var el=document.getElementById('wz_'+f[0]);if(el)WZD.v[f[0]]=el.value;var p=document.getElementById('wzp_'+f[0]);if(p)WZD.per[f[0]]=p.value});var n=document.getElementById('wzn_fuel');if(n)WZD.n.fuel=n.value;
+  ARRQ.forEach(function(q){var a=WZD.arr[q[0]],x=document.getElementById('wza_'+q[0]),y=document.getElementById('wzm_'+q[0]);if(a&&x){a.bal=x.value;a.pay=y?y.value:''}});
+  BFLAGS.forEach(function(f){var el=document.getElementById('wzf_'+f[0]);if(el)WZD.flags[f[0]]=el.checked?1:0})}
+function wzArrDebts(){var out=[];ARRQ.forEach(function(q){var a=WZD.arr[q[0]];if(!a||a.on!==1)return;var bal=bnum(a.bal);if(!(bal>0))return;out.push({id:bid(),k:q[0],l:a.l||BDEBT[q[0]][0],bal:bal,rate:BDEBT[q[0]][1],pay:bnum(a.pay)})});return out}
+function wzMerge(){var b=bud(),add=wzArrDebts(),ks={};add.forEach(function(d){ks[d.k]=1});b.debts=b.debts.filter(function(d){return !ks[d.k]||!(d.k in WZD.arr)}).concat(add);b.flags=WZD.flags;b.demo=0;b.btab='dettes';WZD=null;closeSheet();save();render();toast(add.length?add.length+' dette'+(add.length>1?'s':'')+' ajoutée'+(add.length>1?'s':'')+' à ton plan':'C’est noté')}
+function wzFinish(){var b={v:1,v2:1,demo:0,btab:'home',docs:(S.bud&&!S.bud.demo&&S.bud.docs)||[],stable:WZD.stable,safety:0,extra:0,strat:'avalanche',inc:[],exp:[],debts:wzArrDebts().concat(WZD.debts.map(function(d){return {id:bid(),k:d.k,l:d.l,bal:d.bal,rate:d.rate,pay:d.pay}})),flags:WZD.flags,foyer:WZD.foyer,goals:(S.bud&&!S.bud.demo&&S.bud.goals)||[],tx:(S.bud&&!S.bud.demo&&S.bud.tx)||{}};if(S.bud&&!S.bud.demo){b.strat=S.bud.strat||'avalanche';b.extra=S.bud.extra||0;b.coach=S.bud.coach}
+  WZ.forEach(function(st){(st.f||[]).forEach(function(f){var a=bnum(WZD.v[f[0]]);if(!(a>0))return;var per=WZD.per[f[0]]||f[3];
+    if(f[2]==='safety'){b.safety=a;return}
+    if(f[2]==='inc'){b.inc.push({id:bid(),l:f[1].replace(' (total par an)','').replace(' mensuel','').replace(/\s*\(.*\)$/,''),a:Math.round(f[3]==='y'?a/12:a)});return}
+    var e={id:bid(),c:f[2],l:f[4]==='fuel'?'Carburant (un plein)':f[1].replace(' (par an)',''),a:a,f:per,n:f[4]==='fuel'?Math.max(1,Math.round(bnum(WZD.n.fuel)||1)):1};b.exp.push(e)})});
+  if(!b.inc.length){toast('Indique au moins ton revenu mensuel');WZD.step=0;wzRender();return}
+  b.exp=b.exp.concat(WZD.keepExp||[]);b.inc=b.inc.concat(WZD.keepInc||[]);b.debts=b.debts.concat(WZD.keepDebts||[]);
+  S.bud=b;WZD=null;closeSheet();save();render();toast('Ton plan est à jour')}
+
+/* ----- coach IA ----- */
+function mdLite(t){return String(t).split(/\n+/).map(function(l){l=l.trim();if(!l)return '';var h=/^#{1,3}\s+/.test(l),li=/^[-•*]\s+/.test(l)||/^\d+[.)]\s+/.test(l);l=esc(l.replace(/^#{1,3}\s+/,'').replace(/^[-•*]\s+/,''));l=l.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');return h?'<h4>'+l+'</h4>':li?'<p class="li">'+l+'</p>':'<p>'+l+'</p>'}).join('')}
+function bContext(){var b=bud(),c=bCalc(),sim=bDebtSim(+b.extra||0,b.strat,true),plan=bPlan(c);
+  var L=['Revenus nets mensuels : '+Math.round(c.inc)+' €.','Dépenses essentielles : '+Math.round(c.need)+' €/mois ; envies : '+Math.round(c.want)+' €/mois ; mensualités de crédit : '+Math.round(c.dpay)+' €/mois.','Reste chaque mois : '+Math.round(c.left)+' € (taux d’épargne '+Math.round(c.rate*100)+' %).',
+   'Détail des dépenses mensuelles : '+Object.keys(c.byCat).map(function(k){return BCAT[k].n+' '+Math.round(c.byCat[k])+' €'}).join(', ')+'.',
+   'Épargne disponible : '+Math.round(+b.safety||0)+' € ('+nf1.format(c.safeM)+' mois de dépenses essentielles ; objectif '+c.tgtM+' mois, revenus '+(b.stable?'réguliers':'irréguliers')+').',
+   'Dettes : '+(b.debts.length?b.debts.map(function(d){return d.l+' ('+BDEBT[d.k][0]+(bPrio(d)?', DETTE PRIORITAIRE':'')+') : reste '+Math.round(d.bal)+' €, taux '+d.rate+' %, '+((+d.pay||0)>0?'remboursé '+Math.round(d.pay)+' €/mois':'aucun remboursement prévu')}).join(' ; '):'aucune')+'.',
+   'Foyer : '+(b.foyer?(b.foyer.couple?'en couple':'seul(e)')+', '+b.foyer.kids+' enfant(s) à charge, '+b.foyer.act+', '+b.foyer.log+', âge '+b.foyer.age+(b.foyer.hand?', situation de handicap':''):'non renseigné')+'. Aides possibles repérées par l’app : '+((bAides(c)||[]).map(function(a){return a.t}).join(', ')||'aucune')+'.',
+   'Situation : '+(BFLAGS.filter(function(f){return (b.flags||{})[f[0]]}).map(function(f){return f[1].toLowerCase()}).join(' ; ')||'rien de particulier signalé')+'.',
+   b.debts.length?'Avec la méthode '+(b.strat==='boule'?'boule de neige':'avalanche')+' et '+Math.round(+b.extra||0)+' € de plus par mois : libre de dettes '+(sim.months?'en '+mlabel(sim.months):'jamais (mensualités trop faibles)')+'.':'',
+   'Objectifs : '+(b.goals.length?b.goals.map(function(g){return g.t==='investir'?g.l+' : '+g.monthly+' €/mois':g.l+' : '+g.target+' € visés, '+(g.saved||0)+' € déjà, pour '+g.date}).join(' ; '):'aucun')+'.',
+   'Plan calculé par l’app pour ce mois : '+(plan.length?plan.map(function(p){return p.l+' '+p.a+' €'}).join(', '):'rien à répartir')+'.'];
+  return L.filter(Boolean).join('\n')}
+function bAsk(kind,q){var out=$('#bcOut');if(!out)return;if(!qLeft('coach')){qWall('coach');return}out.hidden=false;
+  var ask={plan:'Fais-moi un plan concret pour ce mois : comment répartir mon argent et quoi faire en premier.',dettes:'Explique-moi comment sortir de mes dettes le plus vite et au moindre coût, étape par étape.',eco:'Où puis-je faire des économies réalistes ? Donne les postes et les montants.',investir:'Quand et comment pourrai-je commencer à investir, vu ma situation ?',impayes:'J’ai des retards et des impayés : par quoi commencer, qui contacter et quoi leur dire ?'}[kind]||q;
+  var prompt='Tu es le coach budget de l’app Finly, une app d’éducation financière en français. Tu aides une personne à mieux gérer son argent, à sortir de ses dettes, à épargner puis à investir. Ton ton est bienveillant, direct et concret, sans jugement. Tu tutoies.\n\nSituation de la personne (données saisies dans l’app) :\n'+bContext()+
+   '\n\nSa demande : '+ask+'\n\nRègles : réponds en 180 mots maximum, en français simple. Structure : une ligne « ## Diagnostic » avec 2 phrases, puis « ## Ce que je te propose » avec 3 à 5 actions numérotées, chacune chiffrée en euros par mois quand c’est possible, puis « ## Ta prochaine étape » en une phrase. Respecte l’ordre de priorité : d’abord les dettes prioritaires (loyer, énergie, eau, pension alimentaire, impôts, amendes, trop-perçus d’aides, URSSAF), car leur non-paiement peut entraîner expulsion, coupure, saisie sur salaire ou majorations : pour chacune, dis à qui demander un échéancier ; puis équilibrer le budget, mini-matelas d’un mois, rembourser les dettes chères (8 % et plus), matelas complet, projets, puis investir à long terme. Appuie-toi sur les chiffres fournis, n’en invente pas. Ne recommande aucun titre, fonds ou établissement précis : parle de catégories (livret réglementé, ETF diversifié, compte-titres, assurance-vie). Si la personne a des impayés ou un budget dans le rouge, mentionne le Point conseil budget (gratuit). Si ses dettes sont impossibles à rembourser, mentionne le dossier de surendettement gratuit à la Banque de France ou une association comme Crésus. Ne lui propose jamais un nouveau crédit pour rembourser des dettes. Si l’app a repéré des aides possibles, rappelle les plus utiles et l’organisme où les demander.';
+  out.innerHTML='<p class="muted">Ton coach analyse ton budget…</p>';
+  var fb=function(){var tips=bTips(bCalc()),plan=bPlan(bCalc());return '## Diagnostic\n'+(tips[0]?tips[0][1]:'Ton budget est équilibré.')+'\n## Ce que je te propose\n'+(plan.length?plan.map(function(p,i){return (i+1)+'. '+p.l+' : '+p.a+' € par mois. '+p.why}).join('\n'):tips.slice(0,3).map(function(t,i){return (i+1)+'. '+t[2]}).join('\n'))+'\n## Ta prochaine étape\nMets en place un virement automatique le jour de ta paie.\n(Coach IA indisponible pour le moment : voici le plan calculé par l’app.)'};
+  samplePromise.then(function(sample){
+    if(!sample){var t0=fb();out.innerHTML=mdLite(t0);return}
+    sample(prompt,{cache:false,onText:function(p){out.innerHTML=mdLite(p.text)}}).then(function(r){out.innerHTML=mdLite(r.text);bud().coach={text:r.text,d:new Date().toLocaleDateString('fr-FR')};qUse('coach');save()}).catch(function(e){out.innerHTML=(e&&e.code==='rate_limited')?'<p>Le coach est très sollicité, réessaie dans un moment.</p>':mdLite(fb())})})}
+
+/* ----- événements ----- */
+document.addEventListener('click',function(e){var t=e.target.closest('[data-btab],[data-bact],[data-bnew],[data-bexp],[data-binc],[data-bdebt],[data-bgoal],[data-bgnew],[data-bsave],[data-bdel],[data-bstrat],[data-bcoach],[data-btxdel],[data-wznav],[data-wzadd],[data-wzdd],[data-wzst],[data-wzarr],[data-btabgo]');if(!t)return;var b=bud(),d=t.dataset;
+  if(d.btab){b.btab=d.btab;save();render();return}
+  if(d.bact==='wizard'){wzOpen();return}
+  if(d.bact==='edit'){bEditSheet();return}
+  if(d.btabgo){b.btab=d.btabgo;closeSheet();save();render();var bb=$('.btabs');if(bb)bb.scrollIntoView({block:'start'});return}
+  if(d.bact==='aides'){bAidSheet();return}
+  if(d.bact==='aidok'){b.foyer=bFoyerRead('af_');save();render();bAidSheet();return}
+  if(d.bact==='applyx'){b.extra=+t.getAttribute('data-x')||0;b.demo=0;save();render();toast('Ajouté à ton plan de sortie');return}
+  if(d.bact==='arr'){if(b.demo){wzOpen();return}wzOpen(true);return}
+  if(d.wzarr){wzRead();var pa=d.wzarr.split('|'),sh0=document.querySelector('.sheet'),y0=sh0?sh0.scrollTop:0;WZD.arr[pa[0]]=WZD.arr[pa[0]]||{};WZD.arr[pa[0]].on=+pa[1];wzRender();var sh1=document.querySelector('.sheet');if(sh1)sh1.scrollTop=y0;if(pa[1]==='1'){var fi=document.getElementById('wza_'+pa[0]);if(fi)try{fi.focus({preventScroll:true})}catch(er){}}return}
+  if(d.bact==='stable'){b.stable=b.stable?0:1;b.demo=0;save();render();return}
+  if(d.bact==='safety'){BED={kind:'safety'};sheet('<div class="sheet-top"><span class="k">Épargne de précaution</span><button class="xbtn" data-close="1" aria-label="Fermer">✕</button></div>'+bField('bfSafe','Argent disponible aujourd’hui sur tes livrets (€)',b.safety||0)+'<button class="btn" data-bsave="safety">Enregistrer</button>');return}
+  if(d.bsave==='safety'){b.safety=bnum(($('#bfSafe')||{}).value);b.demo=0;BED=null;closeSheet();save();render();toast('Enregistré');return}
+  if(d.bsave){bSave();return}
+  if(d.bdel){bDel(d.bdel);return}
+  if(d.bnew!==undefined){bEditExp(null,d.bnew);return}
+  if(d.bexp){bEditExp(d.bexp);return}
+  if(d.binc){bEditInc(d.binc);return}
+  if(d.bdebt){bEditDebt(d.bdebt);return}
+  if(d.bgoal){bEditGoal(d.bgoal);return}
+  if(d.bgnew){bEditGoal(null,d.bgnew);return}
+  if(d.bstrat){b.strat=d.bstrat;save();render();return}
+  if(d.bcoach){bAsk(d.bcoach);return}
+  if(d.btxdel){var mk=bmonth();b.tx[mk]=(b.tx[mk]||[]).filter(function(x){return x.id!==d.btxdel});save();render();return}
+  if(d.wzst!==undefined){wzRead();WZD.stable=+d.wzst;wzRender();return}
+  if(d.wzdd!==undefined){WZD.debts.splice(+d.wzdd,1);wzRender();return}
+  if(d.wzadd){var k=$('#wzK').value,bal=bnum($('#wzB').value),pay=bnum($('#wzP').value),r=$('#wzR').value.trim()?bnum($('#wzR').value):BDEBT[k][1];if(!(bal>0)||!(pay>0)){toast('Indique le reste dû et la mensualité');return}WZD.debts.push({k:k,l:BDEBT[k][0],bal:bal,rate:r,pay:pay});wzRender();return}
+  if(d.wznav){wzRead();if(WZD.only){wzMerge();return}if(+d.wznav>0&&WZD.step===WZ.length-1){wzFinish();return}WZD.step=Math.max(0,Math.min(WZ.length-1,WZD.step+(+d.wznav)));wzRender();return}
+});
+document.addEventListener('submit',function(e){
+  if(e.target.id==='btxForm'){e.preventDefault();var b=bud(),a=bnum($('#btxA').value),c=$('#btxC').value;if(!(a>0)){toast('Indique un montant');return}var mk=bmonth();(b.tx[mk]=b.tx[mk]||[]).push({id:bid(),a:Math.round(a*100)/100,c:c,l:$('#btxL').value.trim(),d:new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'short'})});b.lastc=c;save();render();toast('Dépense ajoutée');return}
+  if(e.target.id==='bcForm'){e.preventDefault();var q=$('#bcIn').value.trim();if(q.length<3)return;bAsk('free',q);return}
+},true);
+document.addEventListener('input',function(e){var id=e.target.id;
+  if(id==='bExtra'){var b=bud();b.extra=+e.target.value;$('#bExtraV').textContent=eur0(b.extra);var sim=bDebtSim(b.extra,b.strat,true),base=bDebtSim(0,b.strat,false);$('#bDebtOut').innerHTML=bDebtOut(sim,base,Math.max(0,base.interest-sim.interest));clearTimeout(window._bxt);window._bxt=setTimeout(save,400);return}
+  if(id==='bfA'||id==='bfN'||id==='bfF'){var m=$('#bfM');if(m)m.textContent='Soit '+eur0(bmon({a:bnum(($('#bfA')||{}).value),n:bnum(($('#bfN')||{}).value)||1,f:($('#bfF')||{}).value}))+' par mois.'}
+});
+document.addEventListener('change',function(e){if(/^af_/.test(e.target.id)&&bud().foyer){var bb=bud();bb.foyer=bFoyerRead('af_');save();render();var L=$('#bAidList');if(L)L.innerHTML=bAidList(bCalc());return}if(e.target.id==='bfK'){var T=BDEBT[e.target.value],nn=$('#bfKN');if(nn){nn.textContent=T[3];nn.hidden=!T[3]}var rr=$('#bfR');if(rr&&!BED.id)rr.value=T[1];return}if(e.target.id==='bfF'){var m=$('#bfM');if(m)m.textContent='Soit '+eur0(bmon({a:bnum(($('#bfA')||{}).value),n:bnum(($('#bfN')||{}).value)||1,f:e.target.value}))+' par mois.'}});
+
+var TABS=[
+ ['accueil','Accueil','<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>'],
+ ['depenses','Budget','<circle cx="12" cy="12" r="9"/><path d="M12 3v9l6.4 6.4"/><path d="M12 12H3"/>'],
+ ['papiers','Papiers','<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>'],
+ ['dettes','Dettes','<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h4"/>'],
+ ['epargne','Épargne','<path d="M4 19h16"/><path d="M6 15l4-4 3 3 6-7"/><path d="M15 7h4v4"/>']
+];
+var tab='accueil', mcat='Mes valeurs', openAsset=null;
+try{var lt=localStorage.getItem(KEY+'-tab');if(lt)tab=lt}catch(e){}
+function renderTabs(){
+  $('#tabs').innerHTML=TABS.map(function(t){return '<button class="tab" data-tab="'+t[0]+'"'+(tab===t[0]?' aria-current="page"':'')+'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+t[2]+'</svg>'+t[1]+'</button>'}).join('');
+}
+$('#tabs').addEventListener('click',function(e){var b=e.target.closest('[data-tab]');if(!b)return;tab=b.dataset.tab;try{localStorage.setItem(KEY+'-tab',tab)}catch(er){}render();window.scrollTo(0,0)});
+
+function toast(msg){var t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove()},2600)}
+function sheet(html){var gp0=document.getElementById('glpop');if(gp0)gp0.remove();$('#layer').innerHTML='<div class="sheet-wrap" data-close="1"><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>'+html+'</div></div>'}
+function closeSheet(){if(typeof stopTimer==='function')stopTimer();if(typeof CHAT!=='undefined'&&CHAT.unsub){CHAT.unsub();CHAT.unsub=null}if(typeof ttsStop==='function')ttsStop();var gp=document.getElementById('glpop');if(gp)gp.remove();$('#layer').innerHTML='';openAsset=null;quizState=null;if(!S.onb&&(ACC.state==='ok'||ACC.state==='off'||ACC.state==='local'))setTimeout(function(){onboard()},0)}
+$('#layer').addEventListener('click',function(e){if(e.target.dataset&&e.target.dataset.close)closeSheet()});
+
+/* ---------- screens ---------- */
+function ring(p,size,sw,inner,color){var r=(size-sw)/2,c=2*Math.PI*r,o=c*(1-Math.max(0,Math.min(1,p)));
+  return '<span class="ringwrap"><svg class="ring" width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" aria-hidden="true"><circle class="trk" cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke-width="'+sw+'"/><circle class="arc" cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke-width="'+sw+'" stroke-linecap="round" stroke-dasharray="'+c.toFixed(2)+'" stroke-dashoffset="'+o.toFixed(2)+'" transform="rotate(-90 '+size/2+' '+size/2+')"'+(color?' style="stroke:'+color+'"':'')+'/></svg>'+(inner?'<span>'+inner+'</span>':'')+'</span>'}
+var ICO={search:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+ play:'<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>',
+ trophy:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>',
+ hex:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2.5l8.2 4.75v9.5L12 21.5l-8.2-4.75v-9.5z"/></svg>',
+ flame:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3c1 4 5 5.5 5 10a5 5 0 0 1-10 0c0-2.5 1.5-3.5 2-5 1 1.5 2 2 3 2-.5-2 0-5 0-7z"/></svg>'};
+var LOGO='<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" style="color:var(--acc)" aria-hidden="true"><path d="M24 7L38.7 15.5V32.5L24 41L9.3 32.5V15.5Z"/><path d="M20 2v4M28 2v4M20 42v4M28 42v4M2 20h5M2 28h5M41 20h5M41 28h5"/><path d="M15.5 29c3-4.5 5.5-4.5 8.5-1.2s5.5 3.2 9-4.8" stroke-linecap="round"/><path d="M28.5 22.5h4.5V27" stroke-linecap="round"/></svg>';
+ICO.user='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>';
+ICO.lock='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+function modStats(m){var d=m.lessons.filter(function(l){return S.passed[l.id]}).length,min=m.lessons.reduce(function(a,l){return a+(l.min||8)},0);return {d:d,n:m.lessons.length,min:min}}
+function dur(min){var h=Math.floor(min/60),r=min%60;return h?h+' h'+(r?' '+(r<10?'0':'')+r:''):min+' min'}
+
+function rankLine(){return 'Rang '+S.rank+' · '+RANKS[S.rank-1]}
+function homeBudget(){var b=bud(),c=bCalc(),open=docOpen(b),al=bAlerts();
+  return al+'<button class="cta" data-go="budget"><span class="dot pm">€</span><div class="grow" style="text-align:left"><div style="font-size:17px;font-weight:600">'+(b.demo?'Organise ton budget':'Ton budget')+'</div><div class="note">'+(b.demo?'Scanne une facture ou une amende : l’app te prévient avant la date limite.':(c.left>=0?'Reste '+eur0(c.left)+' par mois':'Manque '+eur0(-c.left)+' par mois')+(open.length?' · '+open.length+' papier'+(open.length>1?'s':'')+' à payer':'')+((bAides(c)||[]).length?' · '+bAides(c).length+' aide'+(bAides(c).length>1?'s':'')+' possible'+(bAides(c).length>1?'s':''):''))+'</div></div><span class="muted">›</span></button>'}
+function screenAccueil(){
+  var d=new Date(),days=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'],months=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  var hr=d.getHours(),hello=hr<5||hr>=18?'Bonsoir':'Bonjour';
