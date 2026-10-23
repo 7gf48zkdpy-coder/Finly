@@ -1,0 +1,232 @@
+/* ---------- lesson figures (inline SVG charts, theme colors) ---------- */
+var FC=['var(--acc)','#E8891C','var(--sec)'];
+function fwrap(title,sub,svg,legend,note){return '<figure class="fig"><figcaption><b>'+title+'</b>'+(sub?'<span>'+sub+'</span>':'')+'</figcaption>'+(legend?'<div class="flg">'+legend+'</div>':'')+svg+(note?'<p class="fnote">'+note+'</p>':'')+'</figure>'}
+function flegend(series){return series.length<2?'':series.map(function(s,i){return '<span><i style="background:'+(s.color||FC[i])+'"></i>'+s.name+'</span>'}).join('')}
+function niceMax(v){var p=Math.pow(10,Math.floor(Math.log10(v))),n=v/p;return (n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10)*p}
+function figLine(o){var W=340,H=190,L=44,R=14,T=12,B=26,pw=W-L-R,ph=H-T-B,n=o.x.length;
+  var all=[];o.series.forEach(function(s){all=all.concat(s.vals)});var mn=o.min!=null?o.min:0,mx=o.max||niceMax(Math.max.apply(null,all));
+  var X=function(i){return L+i/(n-1)*pw},Y=function(v){return T+ph-(v-mn)/(mx-mn)*ph};
+  var g='';for(var k=0;k<=4;k++){var v=mn+(mx-mn)*k/4,y=Y(v);g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y+'" y2="'+y+'" style="stroke:var(--sep)" stroke-width="1"/><text x="'+(L-6)+'" y="'+(y+4)+'" text-anchor="end" class="ft">'+o.fmt(v)+'</text>'}
+  var xl='';(o.xt||[0,Math.floor((n-1)/2),n-1]).forEach(function(i){xl+='<text x="'+X(i)+'" y="'+(H-8)+'" text-anchor="'+(i===0?'start':i===n-1?'end':'middle')+'" class="ft">'+o.x[i]+'</text>'});
+  var ln='';o.series.forEach(function(s,si){var c=s.color||FC[si];ln+='<polyline fill="none" style="stroke:'+c+'" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" points="'+s.vals.map(function(v,i){return X(i).toFixed(1)+','+Y(v).toFixed(1)}).join(' ')+'"/>';
+    var last=s.vals.length-1;if(o.series.length>1){var li=o.labelStart?0:last;ln+='<text x="'+(X(li)+(o.labelStart?4:-4))+'" y="'+(Y(s.vals[li])+(s.ldy||-8))+'" text-anchor="'+(o.labelStart?'start':'end')+'" class="fv" style="fill:'+c+'">'+s.name.split(' (')[0]+'</text>'}ln+='<circle cx="'+X(last)+'" cy="'+Y(s.vals[last])+'" r="4" style="fill:'+c+';stroke:var(--card)" stroke-width="2"><title>'+s.name+' : '+o.fmt(s.vals[last])+'</title></circle>';
+    (s.marks||[]).forEach(function(i){ln+='<circle cx="'+X(i)+'" cy="'+Y(s.vals[i])+'" r="4.5" style="fill:'+c+';stroke:var(--card)" stroke-width="2"><title>'+o.x[i]+' : '+o.fmt(s.vals[i])+'</title></circle><text x="'+(X(i)+7)+'" y="'+(Y(s.vals[i])-7)+'" class="fv">'+o.fmt(s.vals[i])+'</text>'})});
+  (o.labels||[]).forEach(function(t){ln+='<text x="'+X(t[0])+'" y="'+(Y(t[1])+(t[3]||-8))+'" text-anchor="'+(t[4]||'end')+'" class="fv">'+t[2]+'</text>'});
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(o.title)+'">'+g+xl+ln+'</svg>';
+  return fwrap(o.title,o.sub,svg,flegend(o.series),o.note)}
+function figBars(o){var rows=o.items.map(function(it,i){var w=Math.abs(it.v)/o.max*100;return '<div class="fb"><span class="fl">'+it.label+'</span><span class="ftrack"><i style="width:'+w.toFixed(1)+'%;background:'+(it.color||'var(--acc)')+'" title="'+esc(it.label+' : '+o.fmt(it.v))+'"></i></span><span class="fvv num">'+o.fmt(it.v)+'</span></div>'}).join('');
+  return fwrap(o.title,o.sub,'<div class="fbars">'+rows+'</div>','',o.note)}
+function figStack(o){var rows=o.items.map(function(it){var tot=it.parts.reduce(function(a,b){return a+b},0);return '<div class="fb"><span class="fl">'+it.label+'</span><span class="ftrack" style="width:'+(tot/o.max*100).toFixed(1)+'%">'+it.parts.map(function(p,i){return '<i style="flex:'+p+';background:'+(o.colors[i])+'" title="'+esc(o.names[i]+' : '+o.fmt(p))+'"></i>'}).join('')+'</span><span class="fvv num">'+(o.tfmt?o.tfmt(it.parts):o.fmt(tot))+'</span></div>'}).join('');
+  return fwrap(o.title,o.sub,'<div class="fbars stack">'+rows+'</div>',o.names.map(function(n,i){return '<span><i style="background:'+o.colors[i]+'"></i>'+n+'</span>'}).join(''),o.note)}
+var fk=function(v){return v>=1e6?nf1.format(v/1e6)+' M€':v>=1e4?nf0.format(v/1e3)+' k€':nf0.format(v)+' €'};
+var fp=function(v){return nf1.format(v)+' %'};
+function range(n){var a=[];for(var i=0;i<n;i++)a.push(i);return a}
+function bondPrice(c,y,n){var p=0;for(var t=1;t<=n;t++)p+=c/Math.pow(1+y,t);return p+100/Math.pow(1+y,n)}
+var FIGS={
+ m01l2:function(){var yrs=range(31);return figLine({title:'Ce que valent 100 € avec le temps',sub:'Pouvoir d’achat de 100 € laissés sans rendement',x:yrs.map(function(y){return y+' an'+(y>1?'s':'')}),xt:[0,10,20,30],fmt:function(v){return nf0.format(v)+' €'},max:100,
+   series:[{name:'Inflation 2 %',vals:yrs.map(function(t){return 100/Math.pow(1.02,t)})},{name:'Inflation 3 %',ldy:14,vals:yrs.map(function(t){return 100/Math.pow(1.03,t)})},{name:'Inflation 5 %',ldy:14,vals:yrs.map(function(t){return 100/Math.pow(1.05,t)})}],
+   note:'À 3 % d’inflation, 100 € ne valent plus qu’environ 41 € de pouvoir d’achat au bout de 30 ans.'})},
+ m01l3:function(){var r=.06/12,it=[10,20,30,40].map(function(n){var v=200*12*n,fv=200*(Math.pow(1+r,12*n)-1)/r;return {label:n+' ans',parts:[v,fv-v]}});
+   return figStack({title:'200 € par mois, placés à 6 % par an',sub:'Ce que tu as versé et ce que les intérêts ont produit',items:it,max:it[3].parts[0]+it[3].parts[1],names:['Tes versements','Intérêts composés'],colors:['var(--sec)','var(--acc)'],fmt:fk,
+   note:'Au bout de 40 ans, tu as versé 96 000 €, mais les intérêts en ont produit plus de 300 000 € : la plus grande partie arrive à la fin.'})},
+ m02l6:function(){var yrs=range(31);return figLine({title:'10 000 € sur 30 ans : l’effet des frais',sub:'Rendement brut de 7 % par an, avant impôts',x:yrs.map(function(y){return y+' ans'}),xt:[0,15,30],fmt:fk,
+   series:[{name:'Frais 0,2 %/an (ETF)',vals:yrs.map(function(t){return 1e4*Math.pow(1.068,t)})},{name:'Frais 1,8 %/an (fonds classique)',vals:yrs.map(function(t){return 1e4*Math.pow(1.052,t)})}],
+   note:'Environ 72 000 € contre 46 000 € : 1,6 point de frais en plus coûte plus du tiers du capital final.'})},
+ m04l2:function(){var ys=range(13).map(function(i){return .01+i*.005});return figLine({title:'Taux monte, prix baisse',sub:'Obligation à 10 ans, coupon de 3 %, prix pour 100 de nominal',x:ys.map(function(y){return nf1.format(y*100)+' %'}),xt:[0,4,8,12],min:60,max:120,fmt:function(v){return nf0.format(v)},
+   series:[{name:'Prix de l’obligation',vals:ys.map(function(y){return bondPrice(3,y,10)}),marks:[4,6]}],
+   note:'Taux du marché en abscisse. À 3 %, l’obligation vaut 100 ; si les taux passent à 4 %, elle tombe vers 92 (soit 919 € pour 1 000 €).'})},
+ m04l4:function(){var ys=range(13).map(function(i){return .01+i*.005});return figLine({title:'Plus l’échéance est longue, plus le prix bouge',sub:'Obligations à coupon de 3 %, prix pour 100 de nominal',x:ys.map(function(y){return nf1.format(y*100)+' %'}),xt:[0,4,8,12],min:40,max:160,fmt:function(v){return nf0.format(v)},
+   series:[{name:'2 ans',vals:ys.map(function(y){return bondPrice(3,y,2)})},{name:'10 ans',vals:ys.map(function(y){return bondPrice(3,y,10)})},{name:'30 ans',vals:ys.map(function(y){return bondPrice(3,y,30)})}],
+   note:'Pour une même variation des taux, l’obligation à 30 ans bouge beaucoup plus que celle à 2 ans : c’est la duration.'})},
+ m07l2:function(){return figStack({title:'Trois profils d’allocation',sub:'Répartition indicative entre actions et obligations ou fonds en euros',items:[{label:'Prudent',parts:[30,70]},{label:'Équilibré',parts:[60,40]},{label:'Dynamique',parts:[85,15]}],max:100,names:['Actions','Obligations / fonds sûrs'],colors:['var(--acc)','var(--sec)'],fmt:function(v){return v+' %'},tfmt:function(p){return p[0]+' / '+p[1]},
+   note:'Plus la part d’actions est élevée, plus le rendement attendu est fort, et plus les baisses temporaires sont profondes.'})},
+ m07l3:function(){var ns=[1,2,3,4,5,6,8,10,12,15,20,25,30,40,50];var s=.35,rho=.2;return figLine({title:'La diversification réduit le risque… jusqu’à un plancher',sub:'Volatilité annuelle d’un portefeuille d’actions selon le nombre de titres (illustration)',x:ns.map(function(n){return n+' titre'+(n>1?'s':'')}),xt:[0,7,14],max:40,fmt:fp,
+   series:[{name:'Volatilité du portefeuille',vals:ns.map(function(n){return 100*Math.sqrt(s*s/n+(1-1/n)*rho*s*s)})}],labels:[[14,100*Math.sqrt(rho)*s,'risque de marché',14,'end']],
+   note:'Le risque propre à chaque entreprise disparaît vite ; le risque du marché, lui, reste. Un ETF monde d’environ 1 400 titres atteint ce plancher d’un coup.'})},
+ m08l7:function(){return figBars({title:'Les grands krachs du S&P 500',sub:'Baisse du plus haut au plus bas',max:60,fmt:function(v){return '−'+nf0.format(Math.abs(v))+' %'},items:[{label:'1987',v:34},{label:'2000-2002',v:49},{label:'2007-2009',v:57},{label:'2020',v:34},{label:'2022',v:25}].map(function(x){x.color='var(--down)';return x}),
+   note:'Chaque fois, l’indice a fini par retrouver puis dépasser son sommet, en quelques mois (2020) ou en plusieurs années (2000, 2008).'})},
+ m09l6:function(){return figBars({title:'Gain de 10 000 € : ce qu’il te reste',sub:'Fiscalité '+PRM.annee+', retrait d’un gain de 10 000 €',max:10000,fmt:function(v){return nf0.format(v)+' €'},items:[{label:'Compte-titres ('+pc(PRM.pfu)+')',v:Math.round(10000*(1-PRM.pfu/100)),color:'var(--sec)'},{label:'PEA de plus de 5 ans ('+pc(PRM.ps)+')',v:Math.round(10000*(1-PRM.ps/100))},{label:'Assurance-vie de plus de 8 ans, gain sous l’abattement ('+pc(PRM.psav)+')',v:Math.round(10000*(1-PRM.psav/100))}],
+   note:'Même placement, même gain : l’enveloppe peut changer de plus de 1 400 € ce que tu gardes.'})},
+ m11l7:function(){var m=['3 mois','1 an','2 ans','5 ans','10 ans','30 ans'];return figLine({title:'Courbe des taux : normale ou inversée',sub:'Taux selon la durée de l’emprunt (exemple)',x:m,xt:[0,2,5],min:0,max:6,fmt:fp,
+   labelStart:1,series:[{name:'Normale',vals:[2,2.3,2.6,3,3.4,3.8],ldy:16},{name:'Inversée',vals:[5.2,5,4.6,4.1,3.9,4.0]}],
+   note:'Normalement, prêter longtemps rapporte plus. Quand les taux courts dépassent les taux longs, la courbe s’inverse : un signal souvent apparu avant les récessions américaines.'})},
+ m11l10:function(){var xs=range(41);return figLine({title:'Le cycle économique',sub:'Activité autour de sa tendance (schéma)',x:xs.map(function(){return ''}),xt:[],min:-1.4,max:1.4,fmt:function(){return ''},
+   series:[{name:'Activité',vals:xs.map(function(i){return Math.sin(i/40*2*Math.PI)})}],labels:[[6,-.45,'Expansion',0,'middle'],[10,1,'Surchauffe',-10,'middle'],[24,.55,'Ralentissement',0,'middle'],[30,-1,'Récession',22,'middle'],[36,.45,'Reprise',0,'middle']],
+   note:'Chaque phase favorise des actifs différents : actions cycliques en reprise, matières premières en surchauffe, obligations et valeurs défensives en récession.'})}
+};
+function lessonHTML(l){
+  var h=l.body.map(function(p){return '<p>'+p+'</p>'}).join('');
+  if(FIGS[l.id]){try{h+=FIGS[l.id]()}catch(e){}}
+  h+=calcHTML(l);
+  if(l.schema){var sc=l.schema,nodes='';sc.nodes.forEach(function(n,i){var lk=sc.links&&sc.links[i]&&!/^[↓→+·]$/.test(sc.links[i].trim())?sc.links[i].replace(/^[↓→]\s*/,''):'';nodes+='<div class="st'+(i===sc.nodes.length-1?' hi':'')+'"><b>'+esc(n[0])+'</b><small>'+esc(n[1])+'</small>'+(lk&&i<sc.nodes.length-1?'<div class="via">'+esc(lk.toLowerCase())+'</div>':'')+'</div>'});
+    h+='<div class="card blk"><h3>'+esc(sc.title)+'</h3><div class="tl">'+nodes+'</div></div>'}
+  if(l.keys)h+='<div class="blk"><h3>À retenir</h3><div class="keys">'+l.keys.map(function(k){return '<div>'+esc(k)+'</div>'}).join('')+'</div></div>';
+  if(l.example)h+='<div class="card blk"><h3>Exemple</h3><p style="margin:0;font-size:16px;line-height:1.5">'+esc(l.example)+'</p></div>';
+  if(l.deep&&l.deep.length)h+='<div class="deep"><span class="tag">Niveau université</span>'+l.deep.map(function(p){return '<p>'+p+'</p>'}).join('')+'</div>';
+  if(l.master)h+='<p class="note" style="font-size:14px">'+esc(l.master)+'</p>';
+  if(l.sources&&l.sources.length)h+='<div class="note">Chiffres vérifiés en octobre 2026 auprès de : '+l.sources.map(function(x){return esc(x[0])}).join(' · ')+'</div>';
+  return h;
+}
+function openLesson(id){
+  if(LEGACY[id])id=LEGACY[id];
+  var l=LX[id];if(!l)return;
+  var m=l.mod,prev=m.lessons[l.ix-1],next=m.lessons[l.ix+1];
+  ttsStop();sheet('<div class="sheet-top"><button class="lnk" data-module="'+m.id+'">‹ '+esc(m.title.length>28?'Module '+m.num:m.title)+'</button><span style="display:flex;gap:8px;align-items:center"><button class="chip" id="ttsBtn">▶ Écouter</button><button class="xbtn" data-close="1" aria-label="Fermer">✕</button></span></div>'+
+   '<div class="k" style="font-size:13px;color:var(--sec);font-weight:600">Leçon '+(l.ix+1)+' sur '+m.lessons.length+'</div><h2 class="title-xl">'+esc(l.title)+'</h2><div class="pills"><span>'+(l.min||8)+' min</span><span>'+l.quiz.length+' questions</span>'+(S.passed[id]?'<span style="color:var(--up)">Validée</span>':'')+(l.upd?'<span>Mis à jour le '+frDate(l.upd)+'</span>':'')+'</div>'+(l.chg&&recentDays(l.upd)<=60?'<div class="updn"><b>Ce qui a changé</b> '+esc(l.chg)+'</div>':'')+
+   '<div class="lesson" style="display:flex;flex-direction:column;gap:18px">'+lessonHTML(l)+'</div>'+
+   (LESSON_SIM[id]?'<div class="cta"><span class="dot pm">%</span><div class="grow"><div style="font-size:17px;font-weight:600">Fais le calcul toi-même</div><div class="note">Simulateur : '+SIMS.filter(function(x){return x[0]===LESSON_SIM[id]})[0][1]+'</div></div><button class="btn small" data-sim="'+LESSON_SIM[id]+'">Ouvrir</button></div>':'')+
+   '<div class="card"><h3>Pas clair ? Demande à l’IA</h3><div class="chips"><button class="chip" data-ask="Explique-moi cette leçon plus simplement, comme à un ado de 15 ans.">Plus simple</button><button class="chip" data-ask="Donne-moi un nouvel exemple chiffré, différent de celui de la leçon.">Un autre exemple</button><button class="chip" data-ask="Relie cette leçon à l’actualité économique récente, en restant prudent sur les chiffres.">Lien avec l’actualité</button></div>'+
+   '<form id="askForm" class="field"><label for="askIn">Ta question</label><input type="text" id="askIn" placeholder="Pose ta question sur cette leçon" autocomplete="off"></form><div class="ai" id="askOut" hidden></div></div>'+
+   quizEntry(id)+
+   (l.exo?'<div class="card"><div class="eyebrow">Exercice écrit · corrigé par l’IA</div><div>'+esc(l.exo)+'</div><textarea id="exoIn" rows="8" style="width:100%;box-sizing:border-box;border-radius:12px;border:1px solid var(--sep);background:var(--bg);color:var(--text);padding:12px;font:inherit;resize:vertical" placeholder="Rédige ta réponse ici">'+esc(((S.exo||{})[id])||'')+'</textarea><button class="btn" id="exoGo">Faire corriger</button><div class="ai" id="exoOut" hidden></div></div>':'')+
+   '<div class="navrow">'+(prev?'<button data-lesson="'+prev.id+'"><small>‹ Précédente</small><span>'+esc(prev.title)+'</span></button>':'<span></span>')+(next?'<button class="r" data-lesson="'+next.id+'"><small>Suivante ›</small><span>'+esc(next.title)+'</span></button>':'<span></span>')+'</div>');
+  var txt=(l.body.join(' ')+' '+(l.deep||[]).join(' ')+' '+(l.keys||[]).join(' ')+' '+(l.example||'')).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ');
+  var ask=function(q){var o=$('#askOut');o.hidden=false;askAI('Tu es le professeur de l’application Finly. Réponds en français, simplement, en 6 phrases maximum, sans conseil d’investissement personnalisé, et sans renvoyer vers des sites ou cours externes. Leçon : « '+l.title+' » (module « '+m.title+' »). Contenu de la leçon : '+txt+' Question de l’élève : '+q,o,'L’IA n’est pas disponible dans cette vue. Dans l’app, elle répondrait ici à ta question en s’appuyant sur la leçon.')};
+  $('#askForm').addEventListener('submit',function(e){e.preventDefault();var q=$('#askIn').value.trim();if(q)ask(q)});
+  document.querySelectorAll('[data-ask]').forEach(function(b){b.addEventListener('click',function(){ask(b.dataset.ask)})});
+  bindQuizEntry(id);$('#ttsBtn').addEventListener('click',function(){ttsLesson(l)});try{glossify(document.querySelector('.sheet .lesson'))}catch(e){}
+  if(l.exo){var ei=$('#exoIn');ei.addEventListener('input',function(){S.exo=S.exo||{};S.exo[id]=ei.value;save()});
+    $('#exoGo').addEventListener('click',function(){if(!isPremium()){paywall('La correction des exercices écrits fait partie de l’offre Premium.');return}var t=ei.value.trim(),o=$('#exoOut');o.hidden=false;if(t.length<200){o.textContent='Ta réponse est trop courte pour être corrigée : développe-la (au moins 200 caractères).';return}
+      askAI('Tu es un professeur exigeant de finance de niveau universitaire, pour l’application Finly. Corrige en français la réponse d’un élève à cet exercice : « '+l.exo+' ». Contexte de la leçon : '+txt.slice(0,1500)+' Évalue selon 5 critères notés chacun sur 4 (compréhension, chiffres et exactitude, risques et nuances, raisonnement, clarté), donne une note totale sur 20, puis 3 points forts, 3 points à améliorer et une version modèle courte. Signale toute erreur factuelle. Ne donne aucun conseil d’investissement personnalisé. Réponse de l’élève : '+t,o,'L’IA n’est pas disponible dans cette vue. Dans l’app, elle corrigerait ici ta réponse sur 20 selon cinq critères.')})}
+  var sh=document.querySelector('.sheet');if(sh)sh.scrollTop=0;
+}
+function attemptsOf(key){return (S.quiz[key]||{}).n||0}
+function quizEntry(id){
+  var qz=S.quiz[id]||{},best=qz.best||0,pass=S.passed[id];
+  var r=ring(pass?1:best/20,56,6,'<span style="font-size:13px">'+(pass?'✓':best?best:'20')+'</span>',pass?'var(--up)':null);
+  var msg=(!S.admin&&qz.mustRead)?'Sous 8/20 : relis la leçon jusqu’en bas pour débloquer le quiz.':(!S.admin&&qz.until&&qz.until>now())?'Prochaine tentative dans <strong id="cd">'+Math.ceil((qz.until-now())/1000)+' s</strong>.':'20 questions chronométrées · 16 requises'+(qz.n?' · '+qz.n+' tentative'+(qz.n>1?'s':''):'');
+  var can=S.admin||!((qz.mustRead)||(qz.until&&qz.until>now()));
+  return '<div class="cta">'+r+'<div class="grow"><div style="font-size:17px;font-weight:600;letter-spacing:-.015em">'+(pass?'Quiz validé':'Valider la leçon')+'</div><div class="note">'+msg+'</div></div>'+(can?'<button class="btn small'+(pass?' ghost':'')+'" data-startquiz="'+id+'">'+(pass?'Refaire':'Commencer')+'</button>':'')+'</div>';
+}
+function bindQuizEntry(id){
+  var b=document.querySelector('[data-startquiz]');if(b)b.addEventListener('click',function(){startQuiz({kind:'lesson',id:id})});
+  var qz=S.quiz[id];
+  if(qz&&qz.mustRead&&!S.admin){var sh=document.querySelector('.sheet');if(sh)sh.addEventListener('scroll',function onS(){if(sh.scrollTop+sh.clientHeight>=sh.scrollHeight-40){qz.mustRead=0;save();sh.removeEventListener('scroll',onS);toast('Leçon relue : quiz débloqué');openLesson(id)}})}
+}
+var quizState=null,qTimer=null;
+function startQuiz(cfg){
+  var key=cfg.kind==='lesson'?cfg.id:cfg.kind==='module'?'mod:'+cfg.id:cfg.kind==='exam'?'exam:'+cfg.id:cfg.kind==='srs'?'srs':'review';
+  var qz=S.quiz[key]||{},attempt=qz.n||0;
+  var qs=buildTest(cfg.kind,cfg.id,attempt,qz.sigs||[]);if(!qs.length){toast('Rien à réviser pour l’instant');return}
+  var title=cfg.kind==='lesson'?LX[cfg.id].title:cfg.kind==='exam'?'Examen · passer '+RANKS[Math.min(6,cfg.id)]:testName(cfg.kind,cfg.id);
+  var newN=qs.filter(function(q){return (qz.sigs||[]).indexOf(q.sig)<0}).length;
+  quizState={cfg:cfg,key:key,qs:qs,i:0,ans:[],need:Math.ceil(qs.length*0.8),title:title,start:now(),attempt:attempt};
+  var tot=qs.reduce(function(a,q){return a+QTIME[q.d||1]},0);
+  sheet('<div class="sheet-top"><span class="k">'+esc(testName(cfg.kind,cfg.id))+'</span><button class="xbtn" data-close="1" aria-label="Annuler">✕</button></div><h2 class="title-xl">'+esc(title)+'</h2>'+
+    '<div class="statgrid"><div><small>Questions</small><b class="num">'+qs.length+'</b></div><div><small>Pour valider</small><b class="num">'+quizState.need+'</b></div><div><small>Durée maximale</small><b class="num">'+Math.round(tot/60)+' min</b></div><div><small>Tentative</small><b class="num">'+(attempt+1)+'</b>'+(attempt?'<small style="margin-top:2px">'+newN+' nouvelles questions</small>':'')+'</div></div>'+
+    '<div class="note">Chrono par question : 30 s facile, 50 s moyenne, 60 s difficile. Temps écoulé = réponse fausse. Environ une question sur cinq a plusieurs bonnes réponses : il faut toutes les cocher, sans en cocher de fausse. Pas de retour en arrière ni de correction pendant le test. Quitter l’app (pour chercher une réponse, par exemple) compte la question comme fausse, et 3 sorties annulent le test. Le copier-coller des questions est désactivé.'+(attempt?' Cette tentative contient davantage de questions difficiles.':'')+'</div>'+
+    '<button class="btn" id="goQ">Commencer</button>');
+  $('#goQ').addEventListener('click',renderQuestion);
+}
+/* ---------- anti-cheat during timed tests ---------- */
+document.addEventListener('visibilitychange',function(){var st=quizState;if(!st||!document.getElementById('nextQ'))return;
+  if(document.hidden){st.leftAt=now()}else if(st.leftAt){st.leftAt=0;st.leaves=(st.leaves||0)+1;cheatReturn(st)}});
+function cheatReturn(st){stopTimer();
+  if(st.leaves>=3){while(st.ans.length<st.qs.length)st.ans.push(0);st.i=st.qs.length;st.annulled=1;finishQuiz();return}
+  st.ans.push(0);st.i++;st.timeouts=(st.timeouts||0)+1;if(st.i<st.qs.length){renderQuestion();var w=document.createElement('div');w.className='cheatw';w.setAttribute('role','alert');w.innerHTML='<b>Tu as quitté l’app pendant le test.</b> La question en cours est comptée fausse ('+st.leaves+'/3). À la 3e sortie, le test est annulé.';var sh=document.querySelector('.sheet .q-meta');if(sh)sh.parentNode.insertBefore(w,sh)}else finishQuiz()}
+['copy','cut','contextmenu','selectstart','dragstart'].forEach(function(ev){document.addEventListener(ev,function(e){if(quizState&&document.getElementById('nextQ')&&e.target.closest&&e.target.closest('.sheet')){e.preventDefault()}})});
+function stopTimer(){if(qTimer){clearInterval(qTimer);qTimer=null}}
+function renderQuestion(){
+  stopTimer();
+  var st=quizState;if(!st)return;var q=st.qs[st.i],lim=QTIME[q.d||1],end=now()+lim*1000;
+  var lvl=['','Facile','Moyenne','Difficile'][q.d||1];
+  sheet('<div class="q-top"><button class="xbtn" data-close="1" aria-label="Quitter">✕</button><div class="bar"><i style="width:'+(st.i/st.qs.length*100)+'%"></i></div><span id="qtr">'+ring(1,40,4,'<span id="qt" class="num" style="font-size:12px">'+lim+'</span>')+'</span></div>'+
+   '<div class="q-meta"><span>Question '+(st.i+1)+' sur '+st.qs.length+'</span><span>'+(q.cat?esc(q.cat)+' · ':'')+lvl+'</span></div>'+
+   (q.multi?'<div class="mxnote">Plusieurs réponses possibles · coche toutes les bonnes</div>':'')+'<h2 class="q-title">'+esc(q.q)+'</h2><div style="display:flex;flex-direction:column;gap:10px" role="group" aria-label="Réponses">'+q.opts.map(function(o,i){return '<button class="opt'+(q.multi?' multi':'')+'" data-opt="'+i+'" aria-pressed="false"><span class="lt">'+'ABCD'[i]+'</span>'+(o.s?'<span class="mxo"><small>'+esc(o.s)+'</small><b>'+esc(o.v)+'</b></span>':'<span>'+esc(o.t)+'</span>')+'</button>'}).join('')+'</div>'+
+   '<button class="btn" id="nextQ" disabled>'+(st.i+1<st.qs.length?'Valider et continuer':'Terminer')+'</button>');
+  var sel=-1,msel={};
+  function next(timeout){stopTimer();var good=q.multi?(!timeout&&q.opts.every(function(o,k){return !!msel[k]===!!o.ok})):(!timeout&&sel>=0&&q.opts[sel].ok);st.ans.push(good?1:0);if(timeout)st.timeouts=(st.timeouts||0)+1;st.i++;if(st.i<st.qs.length)renderQuestion();else finishQuiz()}
+  document.querySelectorAll('[data-opt]').forEach(function(b){b.addEventListener('click',function(e){if(q.multi){var k=+b.dataset.opt;msel[k]=!msel[k];b.setAttribute('aria-pressed',String(!!msel[k]));$('#nextQ').disabled=!Object.keys(msel).some(function(z){return msel[z]});return}sel=+b.dataset.opt;document.querySelectorAll('[data-opt]').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});$('#nextQ').disabled=false})});
+  $('#nextQ').addEventListener('click',function(){next(false)});
+  qTimer=setInterval(function(){if(!quizState||quizState!==st){stopTimer();return}var r=Math.max(0,Math.ceil((end-now())/1000)),t=$('#qt'),arc=document.querySelector('#qtr .arc');if(t){t.textContent=r;t.style.color=r<=10?'var(--down)':''}if(arc){var C=parseFloat(arc.getAttribute('stroke-dasharray'));arc.style.strokeDashoffset=(C*(1-(end-now())/(lim*1000))).toFixed(2);arc.style.stroke=r<=10?'var(--down)':''}if(r<=0){toast('Temps écoulé');next(true)}},250);
+}
+function finishQuiz(){
+  stopTimer();if(quizState&&(quizState.cfg.kind==='flash'||quizState.cfg.kind==='weekly'))return finishNewsQuiz();if(quizState&&quizState.cfg.kind==='place')return finishPlacement();
+  var st=quizState,cfg=st.cfg,score=st.ans.reduce(function(a,b){return a+b},0),ok=score>=st.need,sigs=st.qs.map(function(q){return q.sig});
+  var firstPass=cfg.kind==='lesson'&&!S.passed[cfg.id];
+  var qz=S.quiz[st.key]||{};var prevScore=qz.last;qz.sigs=sigs;qz.n=(qz.n||0)+1;qz.best=Math.max(qz.best||0,score);qz.last=score;
+  var low=score<Math.round(st.qs.length*0.4);
+  if(ok){qz.fails=0;qz.until=0;qz.mustRead=0}
+  else{qz.fails=(qz.fails||0)+1;qz.until=(S.admin||cfg.kind==='srs')?0:now()+[60,180,300][Math.min(qz.fails-1,2)]*1000;if(low&&cfg.kind==='lesson')qz.mustRead=1}
+  S.quiz[st.key]=qz;srsUpdate(st);if(cfg.kind==='srs'&&!srsDue().length)S.srsCleared=1;if(cfg.kind==='lesson'&&score===st.qs.length)S.perfect=1;
+  if(ok){
+    if(cfg.kind==='lesson'){S.passed[cfg.id]=1;S.skills[LX[cfg.id].side]=1}
+    else if(cfg.kind==='module'){S.modPassed=S.modPassed||{};S.modPassed[cfg.id]=1}
+    else if(cfg.kind==='review'||cfg.kind==='srs')S.skills.reviser=1;
+    else if(cfg.kind==='exam'&&cfg.id>=S.rank){S.rank=Math.min(7,cfg.id+1);if(cfg.id>=7)S.grandMaster=1;arank=S.rank}
+  }
+  var gained=score*10+(ok&&firstPass?100:0)+(ok&&cfg.kind==='module'?250:0)+(ok&&(cfg.kind==='review'||cfg.kind==='srs')?60:0)+(ok&&cfg.kind==='exam'?500:0);addXP(gained);gained+=markActiveDay();
+  save();
+  var missed={};st.qs.forEach(function(q,i){if(!st.ans[i]&&LX[q.lesson]){missed[q.lesson]=(missed[q.lesson]||0)+1}});
+  var html='<div class="row"><span class="eyebrow">'+esc(st.title)+'</span><button class="btn ghost small" data-close="1">Fermer</button></div>';
+  var note20=Math.round(score/st.qs.length*200)/10;
+  html+='<div class="card" style="align-items:center;text-align:center"><div class="big num">'+score+' / '+st.qs.length+'</div><div class="note">soit '+nf1.format(note20)+' / 20 · minimum '+st.need+' · '+Math.round((now()-st.start)/60000)+' min'+(st.timeouts?' · '+st.timeouts+' hors délai':'')+'</div>'+(st.annulled?'<div class="prog down">Test annulé : tu as quitté l’app 3 fois pendant le test.</div>':'')+(prevScore!=null?'<div class="prog '+(score>prevScore?'up':score<prevScore?'down':'')+'">Tentative précédente '+prevScore+' → '+score+' ('+(score>=prevScore?'+':'')+(score-prevScore)+')'+(score>prevScore?' · tu progresses, sur des questions différentes':'')+'</div>':'')+'<span class="badge acc">+'+gained+' points</span><h2>'+(ok?(cfg.kind==='exam'?'Rang '+RANKS[S.rank-1]+' obtenu !':'Validé !'):'Pas encore')+'</h2><div class="note">'+(ok?(cfg.kind==='lesson'?'Leçon validée, un côté de ton Hexagone s’allume.':cfg.kind==='module'?'Module validé.':(cfg.kind==='review'||cfg.kind==='srs')?'Révision réussie. Les questions ratées reviendront dans ta révision du jour.':'Tu passes au rang '+S.rank+' sur 7.'):(low&&cfg.kind==='lesson'?'Moins de 8/20 : relecture complète de la leçon obligatoire avant de réessayer.':'Il fallait '+st.need+' bonnes réponses. La prochaine tentative changera plus de la moitié des questions et sera plus difficile.'))+'</div></div>';
+  if(ok){html+='<div class="eyebrow">Corrigé détaillé</div>'+st.qs.map(function(q,i){var good=q.opts.filter(function(o){return o.ok})[0];return '<div class="card"><div style="font-weight:600">'+(st.ans[i]?'✓ ':'✗ ')+esc(q.q)+'</div><div class="note"><strong>'+esc(q.multi?'Bonnes réponses : '+q.opts.filter(function(o){return o.ok}).map(function(o){return o.t}).join(' · '):(good?good.t:''))+'</strong> · '+esc(q.explain)+'</div></div>'}).join('')}
+  else{html+='<div class="card"><h3>À retravailler</h3>'+Object.keys(missed).sort(function(a,b){return missed[b]-missed[a]}).map(function(m){return '<div class="miss"><div><b>'+esc(LX[m].title)+'</b> <span class="muted">('+missed[m]+' erreur'+(missed[m]>1?'s':'')+')</span></div><div class="row" style="justify-content:flex-start;gap:8px"><button class="btn small ghost" data-lesson="'+m+'">Revoir la leçon</button>'+(drillLids(m).length?'<button class="btn small ghost" data-drill="'+m+'">S’entraîner</button>':'')+'</div></div>'}).join('')+'<div class="note">Le corrigé ne s’affiche qu’une fois le test réussi : la prochaine tentative aura d’autres questions et d’autres chiffres, donc seule la compréhension paie. Revois la leçon et entraîne-toi sur les calculs avant de retenter.</div></div>'}
+  html+='<button class="btn" data-close="1">Continuer</button>';
+  quizState=null;sheet(html);render();
+}
+
+/* ---------- global clicks ---------- */
+document.addEventListener('click',function(e){
+  var t=e.target.closest('button,[data-go]');if(!t)return;
+  if(t.dataset.go){if(t.dataset.pt)S.ptab=t.dataset.pt;tab=t.dataset.go;closeSheet();render();window.scrollTo(0,0);return}
+  if(t.dataset.lesson){openLesson(t.dataset.lesson);return}
+  if(t.dataset.module){openModule(t.dataset.module);return}
+  if(t.dataset.nq&&!t.disabled){nqStart(t.dataset.nq);return}
+  if(t.dataset.gl){glossPop(t.dataset.gl);return}
+  if(t.dataset.basics){basicsSheet();return}
+  if(t.dataset.ttstest){ttsTest();return}
+  if(t.dataset.ptab){S.ptab=t.dataset.ptab;save();render();window.scrollTo(0,0);return}
+  if(t.dataset.persona){var P0=PERSONAS.filter(function(x){return x.id===t.dataset.persona})[0];S.ttsPersona=P0.id;if(P0.g)S.ttsGender=P0.g;S.ttsVoice='';save();document.querySelectorAll('[data-persona]').forEach(function(x){x.setAttribute('aria-checked',String(x.dataset.persona===P0.id))});var ts=$('#ttsSel');if(ts)ts.value='';ttsTest(P0.id);return}
+  if(t.dataset.ttsg){S.ttsGender=t.dataset.ttsg;S.ttsVoice='';save();if(!t.closest('#pseForm'))render();document.querySelectorAll('[data-ttsg]').forEach(function(x){x.setAttribute('aria-pressed',String(x.dataset.ttsg===S.ttsGender))});ttsTest();return}
+  if(t.dataset.drill){drillStart(t.dataset.drill);return}
+  if(t.dataset.chat){if(CHAT.unsub){CHAT.unsub();CHAT.unsub=null}chatOpen(t.dataset.chat==='1'?'general':t.dataset.chat);return}
+  if(t.dataset.chatroom){CHAT.room=t.dataset.chatroom;document.querySelectorAll('[data-chatroom]').forEach(function(x){x.setAttribute('aria-pressed',String(x===t))});CHAT.last=0;chatRender();return}
+  if(t.dataset.chatdel){var cd=t.dataset.chatdel.split('|');chatDelete(cd[0],cd[1]);return}
+  if(t.dataset.srs&&!t.disabled){startQuiz({kind:'srs'});return}
+  if(t.dataset.revmod){startQuiz({kind:'review',id:t.dataset.revmod});return}
+  if(t.dataset.place){startPlacement();return}
+  if(t.dataset.sim){simSheet(t.dataset.sim);return}
+  if(t.dataset.glossary){glossSheet('');return}
+  if(t.dataset.cert){downloadCert();return}
+  if(t.dataset.flnew&&!t.disabled){flNewSheet(false);return}
+  if(t.dataset.fljoin&&!t.disabled){flNewSheet(true);return}
+  if(t.dataset.fl){flView(t.dataset.fl);return}
+  if(t.dataset.flleave){S.friends=(S.friends||[]).filter(function(f){return f.code!==t.dataset.flleave});S.flSig='';save();flPublish();closeSheet();render();toast('Tu as quitté la ligue');return}
+  if(t.dataset.jrev){var jp=t.dataset.jrev.split(':'),jt=S.trades[+jp[0]];if(jt){jt.rev=jp[1];save();render();toast('Décision notée dans ton journal')}return}
+  if(t.dataset.news){openNews(t.dataset.news);return}
+  if(t.dataset.legal){legalSheet(t.dataset.legal);return}
+  if(t.dataset.paywall){paywall(t.dataset.paywall==='1'?'':t.dataset.paywall);return}
+  if(t.dataset.plan){document.querySelectorAll('[data-plan]').forEach(function(b){b.setAttribute('aria-pressed',String(b===t))});return}
+  if(t.dataset.trial){S.trialEnd=now()+7*864e5;save();closeSheet();render();toast('Essai Pro activé pour 7 jours');return}
+  if(t.dataset.buy){toast('Le paiement de '+(OFFERS[t.dataset.buy]||OFFERS.premium).n+' sera disponible à la sortie officielle');return}
+  if(t.dataset.pseudo){onboard(true);return}
+  if(t.dataset.ncat){ncat=t.dataset.ncat;render();return}
+  if(t.dataset.arank){arank=+t.dataset.arank;render();return}
+  if(t.dataset.asset){renderAssetSheet(t.dataset.asset);return}
+  if(t.dataset.cat){mcat=t.dataset.cat;render();return}
+  if(t.dataset.mview){S.mview=t.dataset.mview;render();return}
+  if(t.dataset.pview){S.pview=t.dataset.pview;render();return}
+  if(t.dataset.zone){rzone=t.dataset.zone;render();return}
+  if(t.dataset.train){trainSheet(t.dataset.train);return}
+  if(t.dataset.real){realSheet(t.dataset.real);return}
+  if(t.dataset.line!=null){var ln=S.real[+t.dataset.line];if(ln)realSheet(ln.key,+t.dataset.line);return}
+  if(t.dataset.goReal){pickRealSheet();return}
+  if(t.dataset.connect){connectSheet();return}
+  if(t.dataset.t212!=null){t212Sheet(t.dataset.t212);return}
+  if(t.dataset.cancel!=null){S.orders.splice(+t.dataset.cancel,1);save();render();toast('Ordre annulé');return}
+  if(t.dataset.cleardemo){S.real=S.real.filter(function(l){return !l.demo});save();render();toast('Lignes d’exemple supprimées');return}
+  if(t.dataset.admin){var a=t.dataset.admin;
+    if(a==='toggle')S.admin=!S.admin;
+    if(a==='hex')SIDES.forEach(function(x){S.skills[x[0]]=1});
+    if(a==='lessons')LORDER.forEach(function(id){S.passed[id]=1;S.skills[LX[id].side]=1;if(S.quiz[id])S.quiz[id].until=0});
+    if(a==='cash')S.cash+=10000;
+    if(a==='xp')S.lg.xp+=500;
+    if(a==='week'){var y=new Date(S.lg.week+'T00:00:00');y.setDate(y.getDate()-7);S.lg.week=ymd(y)}
+    if(a==='t212')S.t212=0;
+    if(a==='onb'){S.onb=0;save();onboard();return}
+    if(a==='free'){S.admin=false;S.plan='';S.trialEnd=0}
+    save();render();toast(a==='toggle'?(S.admin?'Mode créateur activé':'Mode créateur désactivé'):'Fait');return}
+  if(t.dataset.review&&!t.disabled){startQuiz({kind:'review'});return}
+  if(t.dataset.modtest){startQuiz({kind:'module',id:t.dataset.modtest});return}
