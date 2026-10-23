@@ -6,3 +6,4 @@
 [build.environment]
   # La clé Supabase de cloud.js est publique (publishable) : ce n'est pas un secret
   SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
+  NODE_VERSION = "20"
