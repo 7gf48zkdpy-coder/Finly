@@ -1,0 +1,168 @@
+/* ---------- Finly : espace client (connexion Google, e-mail, code, double sécurité) ---------- */
+function fAcc(){return window.FinlyCloud&&window.FinlyCloud.account}
+function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lsSet(k,v){try{if(v==null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){}}
+var AINFO=null,EMRE=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function acctInfo(){var A=fAcc();if(!A||!A.info)return Promise.resolve(null);return A.info().then(function(i){AINFO=i;return i}).catch(function(){return null})}
+function fInput(id,label,type,ph,extra){return '<label for="'+id+'">'+label+'</label><input id="'+id+'" type="'+(type||'text')+'"'+(ph?' placeholder="'+ph+'"':'')+(extra||'')+' style="height:48px;border-radius:12px;border:1px solid var(--sep);background:var(--card);color:var(--text);padding:0 12px;font-size:16px">'}
+function fErr(id,m){var e=$('#'+id);if(e){e.textContent=m;e.style.color=m?'var(--down)':''}}
+var GICON='<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
+
+/* carte du compte dans Profil */
+function finlyAcctBox(){if(ACC.state!=='ok'&&ACC.state!=='sync')return '';var me=ACC.me||{},i=AINFO;
+  if(me.email)return '<div class="note">Compte : '+esc(me.email)+(i&&(i.totp.length||i.emailCode)?' · double sécurité activée':'')+'</div><div class="grid2"><button class="btn small ghost" data-cl="sec">Sécurité</button><button class="btn small ghost" data-facct="out">Se déconnecter</button></div>';
+  return '<div class="note">Crée ton compte ou connecte-toi pour retrouver ton budget, tes papiers et ton plan sur un autre téléphone.</div><button class="btn small" data-cl="open">Se connecter ou créer un compte</button>'}
+
+/* écran de connexion */
+var CL={email:'',step:''};
+function clHome(){sheet('<div class="sheet-top"><span class="k">Mon compte</span><button class="xbtn" data-close="1" aria-label="Fermer">✕</button></div><h2 class="title-xl">Connexion</h2><p class="note" style="font-size:15px">Ta progression actuelle est gardée quand tu crées ton compte.</p>'+
+  '<button class="btn ghost" data-cl="google" style="display:flex;align-items:center;justify-content:center;gap:10px">'+GICON+'Continuer avec Google</button>'+
+  '<button class="btn ghost" data-cl="code">Recevoir un code par e-mail</button>'+
+  '<button class="btn" data-cl="pwin">Se connecter avec mon mot de passe</button>'+
+  '<button class="lnk" data-cl="pwnew" style="align-self:center">Créer un compte avec e-mail et mot de passe</button>'+
+  '<div class="note" id="clErr" aria-live="polite"></div>')}
+function clCode(){var sent=CL.step==='sent';
+  sheet('<div class="sheet-top"><button class="lnk" data-cl="open">‹ Retour</button><button class="xbtn" data-close="1" aria-label="Fermer">✕</button></div><h2 class="title-xl">Code par e-mail</h2>'+
+   '<form id="clCodeForm" class="field">'+fInput('clMail','E-mail','text','toi@exemple.fr',' inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" value="'+esc(CL.email)+'"'+(sent?' readonly':''))+
+   (sent?fInput('clCode','Code reçu par e-mail','text','123456',' inputmode="numeric" autocomplete="one-time-code" maxlength="8"'):'')+
+   '<span class="note" id="clErr" aria-live="polite">'+(sent?'Regarde ta boîte mail (et les indésirables). Le code est valable une heure.':'Tu reçois un code à 6 chiffres. Pas besoin de mot de passe.')+'</span><button class="btn" type="submit">'+(sent?'Valider le code':'Recevoir le code')+'</button></form>'+
+   (sent?'<button class="lnk" data-cl="code" style="align-self:center">Changer d’e-mail ou renvoyer</button>':''))}
+document.addEventListener('submit',function(e){if(!e.target||e.target.id!=='clCodeForm')return;e.preventDefault();var A=fAcc(),b=e.target.querySelector('button[type=submit]');
+  if(CL.step!=='sent'){var m=($('#clMail').value||'').trim().toLowerCase();if(!EMRE.test(m)){fErr('clErr','Adresse e-mail invalide.');return}b.disabled=true;fErr('clErr','');$('#clErr').textContent='Envoi…';
+    A.sendCode(m,true).then(function(){CL.email=m;CL.step='sent';clCode()}).catch(function(x){b.disabled=false;fErr('clErr',x.message)});return}
+  var c=($('#clCode').value||'').replace(/\s/g,'');if(c.length<6){fErr('clErr','Entre le code à 6 chiffres.');return}b.disabled=true;
+  A.verifyCode(CL.email,c).then(function(u){if(u&&u.id)lsSet('finly-2fa:'+u.id,'1');location.reload()}).catch(function(x){b.disabled=false;fErr('clErr',x.message)})},true);
+
+/* sécurité : appli de codes + code par e-mail */
+var SEC={enroll:null,busy:0};
+function secOpen(){SEC.enroll=null;sheet('<div class="sheet-top"><span class="k">Sécurité</span><button class="xbtn" data-close="1" aria-label="Fermer">✕</button></div><h2 class="title-xl">Double sécurité</h2><div id="secBody"><div class="note">Chargement…</div></div>');acctInfo().then(secRender)}
+function secRender(){var box=$('#secBody');if(!box)return;var i=AINFO;if(!i){box.innerHTML='<div class="card"><div class="note">Connecte-toi d’abord à ton compte.</div></div>';return}
+  var on=i.totp.length>0,E=SEC.enroll;
+  var totp='<div class="card"><div class="row"><h3>Appli de codes</h3><span class="badge'+(on?' acc':'')+'">'+(on?'Activée':'Désactivée')+'</span></div><div class="note">À chaque connexion sur un nouveau téléphone, Finly demande le code à 6 chiffres affiché par ton appli (Google Authenticator, Microsoft Authenticator, ou « Mots de passe » sur iPhone).</div>'+
+   (E?'<ol class="note" style="margin:0;padding-left:18px;line-height:1.6"><li>Touche « Ajouter à mon appli de codes » (ou scanne le QR code depuis un autre appareil).</li><li>Entre ci-dessous le code à 6 chiffres qui s’affiche.</li></ol>'+
+     (E.uri?'<a class="btn ghost" href="'+esc(E.uri)+'">Ajouter à mon appli de codes</a>':'')+
+     (E.qr?'<div style="background:#fff;border-radius:14px;padding:10px;align-self:center"><img src="'+esc(E.qr)+'" alt="QR code" width="180" height="180" style="display:block"></div>':'')+
+     '<div class="note">Clé à saisir à la main si besoin : <b class="sel num" style="word-break:break-all">'+esc(E.secret)+'</b></div>'+
+     '<form id="secTotpForm" class="field">'+fInput('secCode','Code à 6 chiffres','text','123456',' inputmode="numeric" autocomplete="one-time-code" maxlength="8"')+'<span class="note" id="secErr"></span><button class="btn" type="submit">Activer</button></form>':
+    (on?'<button class="btn ghost small" data-cl="totpoff">Désactiver l’appli de codes</button>':'<button class="btn small" data-cl="totpon">Activer l’appli de codes</button>'))+'</div>';
+  var mail='<div class="card"><div class="row"><h3>Code par e-mail</h3><span class="badge'+(i.emailCode?' acc':'')+'">'+(i.emailCode?'Activé':'Désactivé')+'</span></div><div class="note">À chaque connexion sur un nouveau téléphone, un code est envoyé à <b>'+esc(i.email)+'</b>.</div>'+
+   '<button class="btn small'+(i.emailCode?' ghost':'')+'" data-cl="'+(i.emailCode?'mailoff':'mailon')+'">'+(i.emailCode?'Désactiver':'Activer')+' le code par e-mail</button></div>';
+  box.innerHTML=totp+mail+'<div class="grp"><button class="lrow" data-facct="pw"><span style="flex:1" class="t">Changer mon mot de passe</span><span class="muted">›</span></button></div>'}
+document.addEventListener('submit',function(e){if(!e.target||e.target.id!=='secTotpForm')return;e.preventDefault();var c=($('#secCode').value||'').replace(/\s/g,'');if(c.length<6){fErr('secErr','Entre le code à 6 chiffres.');return}
+  fAcc().totpCheck(SEC.enroll.id,c).then(function(){SEC.enroll=null;if(ACC.uid)lsSet('finly-2fa-totp:'+ACC.uid,'1');toast('Appli de codes activée');acctInfo().then(function(){secRender();render()})}).catch(function(x){fErr('secErr',x.message)})},true);
+
+/* vérification au démarrage (double sécurité) */
+function gateShow(kind,msg){var g=$('#fgate');if(!g){g=document.createElement('div');g.id='fgate';g.style.cssText='position:fixed;inset:0;z-index:9999;background:var(--bg);color:var(--text);display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto';document.body.appendChild(g)}
+  g.dataset.kind=kind;g.innerHTML='<div style="width:100%;max-width:380px;display:flex;flex-direction:column;gap:14px">'+flogo(56)+'<h2 class="title-xl">Vérification</h2><div class="note" style="font-size:15px">'+(kind==='totp'?'Entre le code à 6 chiffres affiché par ton appli de codes.':'Un code vient d’être envoyé à <b>'+esc((ACC.me||{}).email||'')+'</b>. Regarde aussi les indésirables.')+'</div>'+
+   '<form id="gateForm" class="field">'+fInput('gateIn','Code','text','123456',' inputmode="numeric" autocomplete="one-time-code" maxlength="8"')+'<span class="note" id="gateErr">'+(msg?esc(msg):'')+'</span><button class="btn" type="submit">Valider</button></form>'+
+   (kind==='email'?'<button class="lnk" data-gate="resend" style="align-self:center">Renvoyer le code</button>':'')+'<button class="lnk" data-gate="out" style="align-self:center">Se déconnecter</button></div>'}
+function gateHide(){var g=$('#fgate');if(g)g.remove()}
+function gateCheck(){acctInfo().then(function(i){if(!i||i.anonymous){gateHide();return}
+  if(i.next==='aal2'&&i.aal!=='aal2'){gateShow('totp');return}
+  if(i.emailCode&&lsGet('finly-2fa:'+i.id)!=='1'){fAcc().sendCode(i.email,false).then(function(){gateShow('email')},function(x){gateShow('email',x.message)});return}
+  gateHide()})}
+document.addEventListener('submit',function(e){if(!e.target||e.target.id!=='gateForm')return;e.preventDefault();var g=$('#fgate'),k=g&&g.dataset.kind,c=($('#gateIn').value||'').replace(/\s/g,''),A=fAcc();if(c.length<6){fErr('gateErr','Entre le code à 6 chiffres.');return}
+  var p=k==='totp'?A.totpCheck(null,c):A.verifyCode((ACC.me||{}).email,c).then(function(u){if(u&&u.id)lsSet('finly-2fa:'+u.id,'1')});
+  p.then(function(){gateHide();gateCheck()}).catch(function(x){fErr('gateErr',x.message)})},true);
+document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('[data-gate]');if(!t)return;
+  if(t.dataset.gate==='resend'){fAcc().sendCode((ACC.me||{}).email,false).then(function(){fErr('gateErr','');$('#gateErr').textContent='Nouveau code envoyé.'},function(x){fErr('gateErr',x.message)});return}
+  if(t.dataset.gate==='out'){fAcc().logout().then(function(){lsSet(KEY,null);lsSet('finly-adopt',null);location.reload()})}});
+
+/* actions des boutons du compte */
+document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('[data-cl]');if(!t)return;var k=t.dataset.cl,A=fAcc();if(!A)return;
+  if(k==='open'){CL.step='';clHome();return}
+  if(k==='google'){t.disabled=true;A.google().catch(function(x){t.disabled=false;fErr('clErr',x.message)});return}
+  if(k==='code'){CL.step='';clCode();return}
+  if(k==='pwin'){finlyAcctSheet('in');return}
+  if(k==='pwnew'){finlyAcctSheet('new');return}
+  if(k==='sec'){secOpen();return}
+  if(k==='totpon'){t.disabled=true;A.totpStart().then(function(r){SEC.enroll=r;secRender()}).catch(function(x){t.disabled=false;toast(x.message)});return}
+  if(k==='totpoff'){var i=AINFO;if(!i||!i.totp.length)return;if(!confirm('Désactiver l’appli de codes ?'))return;
+    var off=function(){return A.totpRemove(i.totp[0]).then(function(){toast('Appli de codes désactivée');acctInfo().then(function(){secRender();render()})})};
+    off().catch(function(){var c=prompt('Pour confirmer, entre le code à 6 chiffres de ton appli de codes :');if(!c)return;A.totpCheck(i.totp[0],c).then(off).catch(function(x){toast(x.message)})});return}
+  if(k==='mailon'||k==='mailoff'){t.disabled=true;A.emailCode(k==='mailon').then(function(){if(k==='mailon'&&ACC.uid)lsSet('finly-2fa:'+ACC.uid,'1');toast(k==='mailon'?'Code par e-mail activé':'Code par e-mail désactivé');acctInfo().then(function(){secRender();render()})}).catch(function(x){t.disabled=false;toast(x.message)})}});
+
+/* ---------- paiement par Revolut ---------- */
+var REVTAG='laszz';
+function revLink(amount){return 'https://revolut.me/'+encodeURIComponent(String(CFG.revtag||REVTAG).replace(/^@/,''))+'?currency=EUR&amount='+Math.round(amount*100)}
+function offerAmount(o){return o==='life'?OFFERS.premium.life:(PW.bill==='an'?OFFERS[o].pa:OFFERS[o].pm)}
+function pwBuyBtn(o,ghost){var u=payLink(o),amt=offerAmount(o),lab=o==='life'?'Devenir fondateur : '+nf0.format(OFFERS.premium.life)+' €':(ghost?'S’abonner à ':'Choisir ')+OFFERS[o].n+' · '+nf2.format(amt)+(PW.bill==='an'?' € / an':' € / mois');
+  if(u)return '<a class="btn'+(ghost?' ghost':'')+'" href="'+esc(u)+'" target="_blank" rel="noopener">'+lab+'</a><div class="note" style="text-align:center">Paiement sécurisé par carte. Ton code d’activation arrive ensuite par e-mail : entre-le juste en dessous.</div>';
+  var mail=(ACC.me&&ACC.me.email)||'';
+  return '<a class="btn'+(ghost?' ghost':'')+'" href="'+esc(revLink(amt))+'" target="_blank" rel="noopener">'+lab+'</a><div class="note" style="text-align:center">Paiement par Revolut, avec ou sans compte Revolut (carte bancaire, Apple Pay). Le montant de <b>'+nf2.format(amt)+' €</b> est déjà rempli. Écris '+(mail?'<b>'+esc(mail)+'</b>':'ton adresse e-mail')+' dans le message du paiement : tu reçois ton code d’activation par e-mail, à entrer juste en dessous.'+(PW.bill==='an'||o==='life'?'':' Le paiement n’est pas renouvelé tout seul : tu repaies chaque mois si tu veux continuer.')+'</div>'}
+
+/* ---------- espace créateur : revenus, clients, mode créateur ---------- */
+var FOWN=false;
+function bizProfile(){var row=function(attr,ic,t,sd){return '<'+(attr.indexOf('href=')===0?'a':'button')+' class="lrow" '+attr+'><span class="dot">'+ic+'</span><span style="flex:1;min-width:0"><span class="t" style="display:block">'+t+'</span><span class="s" style="display:block">'+sd+'</span></span><span class="muted">›</span></'+(attr.indexOf('href=')===0?'a':'button')+'>'};
+  return '<div class="grp">'+(FOWN||ACC.owner?row('data-biz="dash"','◆','Espace créateur','Revenus, abonnés, clients, codes et paiements'):'')+
+   row('data-biz="ideas"','💡','Idées et avis','Propose une fonction, vote pour celles que tu veux')+
+   (okLink(CFG.don)?row('href="'+esc(CFG.don)+'" target="_blank" rel="noopener"','♥','Soutenir le projet','Un don, même petit, aide à garder l’app gratuite pour ceux qui en ont besoin'):'')+'</div>'+(ACC.owner?'':more('code','J’ai un code d’activation','Pour activer un abonnement déjà payé',codeBox()))}
+function dashOpen(){if(!(FOWN||ACC.owner)){toast('Réservé au créateur de l’app');return}DASH.cli=null;sheet('<div class="sheet-top"><span class="k">Espace créateur</span><button class="xbtn" data-close="1" aria-label="Fermer">✕</button></div><h2 class="title-xl">Ton app</h2><div id="dashBody"><div class="note">Chargement des chiffres…</div></div>');dashLoad();
+  if(ACC.db)ACC.db.doc('owner/revenue').get().then(function(s){DASH.rev=(s.exists&&(s.data()||{}).list)||[];if(DASH.tab==='rev')dashRender()}).catch(function(){DASH.rev=[]})}
+var DTABS=[['vue','Chiffres'],['rev','Revenus'],['cli','Clients'],['codes','Codes'],['paie','Paiements'],['idees','Idées'],['crea','Mon espace']];
+function dashRender(){var box=$('#dashBody');if(!box)return;var T=DASH.tab;
+  var tabs='<div class="chips" role="group" aria-label="Sections" style="flex-wrap:wrap">'+DTABS.map(function(x){return '<button class="chip" data-dtab="'+x[0]+'" aria-pressed="'+(T===x[0])+'">'+x[1]+'</button>'}).join('')+'</div>';
+  var body=T==='rev'?dashRev():T==='cli'?dashCli():T==='crea'?dashCrea():T==='codes'?dashCodes():T==='paie'?dashPay()+dashRevolut():T==='idees'?'<div class="card"><div class="note">Les idées des utilisateurs, triées par votes. Tu peux leur donner un statut (Prévu, En cours, Fait) : il est visible par tous.</div><button class="btn small" data-biz="ideas">Ouvrir les idées</button></div>':dashVue();
+  box.innerHTML=tabs+body;if(T==='cli'&&!DASH.cli&&!DASH.cliBusy)cliLoad()}
+function dashRevolut(){return '<div class="card"><h3>Revolut</h3><div class="note">Sans lien Stripe, les boutons d’abonnement ouvrent ta page Revolut <b>@'+esc(String(CFG.revtag||REVTAG).replace(/^@/,''))+'</b> avec le bon montant déjà rempli. Quand un paiement arrive, crée un code dans l’onglet « Codes » et envoie-le à l’e-mail écrit dans le message du paiement.</div></div>'}
+/* revenus : codes vendus + revenus ajoutés à la main */
+function codePrice(x){var o=x.plan==='budget'?OFFERS.budget:OFFERS.premium,m=+x.months||1;return m>=1200?OFFERS.premium.life:m>=12?o.pa*m/12:o.pm*m}
+function revItems(){var a=(DASH.codes||[]).filter(function(x){return !x.gift}).map(function(x){return {a:codePrice(x),at:+x.at||0}});(DASH.rev||[]).forEach(function(r){a.push({a:+r.a||0,at:+r.at||0})});return a.filter(function(r){return r.at&&r.a})}
+function dashRev(){var it=revItems(),d=new Date(),y=d.getFullYear(),m=d.getMonth(),sum=function(f){return it.filter(f).reduce(function(s,r){return s+r.a},0)};
+  var inM=function(r,yy,mm){var x=new Date(r.at);return x.getFullYear()===yy&&x.getMonth()===mm};
+  var month=sum(function(r){return inM(r,y,m)}),year=sum(function(r){return new Date(r.at).getFullYear()===y}),total=sum(function(){return true});
+  var st=DASH.stats||[],pb=st.filter(function(x){return x.paid==='budget'}).length,pp=st.filter(function(x){return x.paid==='premium'}).length;
+  var months=[];for(var k=11;k>=0;k--){var dd=new Date(y,m-k,1);months.push({l:MOIS[dd.getMonth()].slice(0,4)+' '+String(dd.getFullYear()).slice(2),v:sum(function(r){return inM(r,dd.getFullYear(),dd.getMonth())})})}
+  var mx=Math.max.apply(null,months.map(function(x){return x.v}).concat([1]));
+  var years={};it.forEach(function(r){var yy=new Date(r.at).getFullYear();years[yy]=(years[yy]||0)+r.a});
+  var kpi=function(l,v,s){return '<div><span class="note">'+l+'</span><b class="num">'+v+'</b>'+(s?'<span class="note">'+s+'</span>':'')+'</div>'};
+  return '<div class="card"><div class="bkpis dk3">'+kpi('Ce mois-ci',eur0(month),MOIS[m])+kpi('Cette année',eur0(year),String(y))+kpi('Abonnés',nf0.format(pb+pp),pb+' Finly+ · '+pp+' Pro')+'</div><div class="note">Total depuis le début : <b>'+eur0(total)+'</b></div></div>'+
+   '<div class="card"><h3>Par mois</h3>'+months.map(function(x){return '<div class="fb"><span class="fl">'+x.l+'</span><span class="ftrack"><i style="width:'+(x.v/mx*100).toFixed(1)+'%;background:var(--acc)"></i></span><span class="fvv num">'+eur0(x.v)+'</span></div>'}).join('')+'</div>'+
+   '<div class="card"><h3>Par année</h3>'+(Object.keys(years).length?Object.keys(years).sort().reverse().map(function(k){return '<div class="ptrow"><span class="ptn">'+k+'</span><b class="num">'+eur0(years[k])+'</b></div>'}).join(''):'<div class="note">Aucun revenu pour l’instant.</div>')+'</div>'+
+   '<div class="card"><h3>Ajouter un revenu</h3><div class="note">Pour un paiement reçu sans code (don, paiement en direct…). Les codes d’activation créés sont déjà comptés automatiquement au prix de l’offre.</div><div class="btxrow">'+bField('revA','Montant (€)','')+'<div class="field"><label for="revD">Date</label><input id="revD" type="date" value="'+ymdL(today0())+'"></div></div>'+bField('revN','Note (facultatif)','','text')+'<button class="btn small" data-rev="add">Ajouter</button></div>'+
+   ((DASH.rev||[]).length?'<div class="grp">'+DASH.rev.slice().reverse().slice(0,30).map(function(r,i){return '<div class="lrow"><span style="flex:1;min-width:0"><span class="t num" style="display:block">'+eur(+r.a)+'</span><span class="s" style="display:block">'+new Date(r.at).toLocaleDateString('fr-FR')+(r.note?' · '+esc(r.note):'')+'</span></span><button class="xbtn" data-rev="del" data-i="'+(DASH.rev.length-1-i)+'" aria-label="Supprimer">✕</button></div>'}).join('')+'</div>':'')+
+   '<p class="note">Montants payés par les clients, TTC. Les abonnés comptés sont ceux dont l’abonnement est actif.</p>'}
+function revSave(){return ACC.db.doc('owner/revenue').set({list:DASH.rev.slice(-2000),upd:now()})}
+document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('[data-rev]');if(!t)return;DASH.rev=DASH.rev||[];
+  if(t.dataset.rev==='add'){var a=bnum(($('#revA')||{}).value),dv=($('#revD')||{}).value,n=(($('#revN')||{}).value||'').trim().slice(0,60);if(!(a>0)){toast('Indique un montant');return}
+    DASH.rev.push({a:Math.round(a*100)/100,at:dv?new Date(dv+'T12:00').getTime():now(),note:n});revSave().then(function(){toast('Revenu ajouté');dashRender()}).catch(function(){DASH.rev.pop();toast('Enregistrement impossible')});return}
+  if(t.dataset.rev==='del'){var i=+t.dataset.i,old=DASH.rev.splice(i,1)[0];revSave().then(function(){dashRender()}).catch(function(){DASH.rev.splice(i,0,old);toast('Suppression impossible')})}});
+/* clients */
+DASH.q='';DASH.anon=0;
+function cliLoad(){DASH.cliBusy=1;fAcc().admin({action:'list'}).then(function(r){DASH.cli=r||{users:[],stats:{}};DASH.cliBusy=0;DASH.cliErr='';if(DASH.tab==='cli')dashRender()}).catch(function(x){DASH.cliBusy=0;DASH.cli={users:[],stats:{}};DASH.cliErr=x.message;if(DASH.tab==='cli')dashRender()})}
+function cliRows(){var C=DASH.cli;if(!C)return '<div class="note">Chargement des clients…</div>';var q=DASH.q.toLowerCase();
+  var L=C.users.filter(function(u){return (DASH.anon||!u.anon)&&(!q||(u.email||'').toLowerCase().indexOf(q)>=0)}).sort(function(a,b){return new Date(b.created)-new Date(a.created)});
+  if(!L.length)return '<div class="card"><div class="note">Aucun client à afficher.</div></div>';
+  var off={free:'Gratuit',budget:'Finly+',premium:'Pro'},fd=function(s){return s?new Date(s).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'}):'—'};
+  return '<div class="grp">'+L.slice(0,300).map(function(u){var s=C.stats[u.id]||{},o=s.paid||(s.trial?'essai':s.offer)||'free';
+    return '<div class="lrow" style="flex-wrap:wrap;gap:8px"><span style="flex:1;min-width:0"><span class="t" style="display:block;word-break:break-all">'+(u.email?esc(u.email):'Invité')+'</span><span class="s" style="display:block">'+(off[o]||'Essai Pro')+' · inscrit le '+fd(u.created)+' · vu le '+fd(u.last)+(u.providers.indexOf('google')>=0?' · Google':'')+(u.mfa?' · 2 facteurs':'')+'</span>'+(u.banned?'<span class="badge" style="color:var(--down)">Bloqué</span>':'')+'</span>'+
+     '<span style="display:flex;gap:6px"><button class="btn small ghost" data-cli="gift" data-u="'+u.id+'">Offrir</button><button class="btn small ghost" data-cli="ban" data-u="'+u.id+'" data-on="'+(u.banned?0:1)+'">'+(u.banned?'Débloquer':'Bloquer')+'</button></span>'+
+     (DASH.gift===u.id?'<div class="btxrow" style="width:100%"><div class="field"><label for="gP">Offre</label>'+bSel('gP',[['premium','Pro'],['budget','Finly+']],'premium')+'</div><div class="field"><label for="gM">Durée</label>'+bSel('gM',[['1','1 mois'],['3','3 mois'],['12','12 mois'],['1200','À vie']],'1')+'</div></div><button class="btn small" data-cli="giftok" data-u="'+u.id+'" style="width:100%">Offrir cet abonnement</button>':'')+'</div>'}).join('')+'</div>'}
+function dashCli(){var C=DASH.cli,n=C?C.users.filter(function(u){return !u.anon}).length:0,an=C?C.users.length-n:0;
+  return '<div class="card"><div class="bkpis dk3"><div><span class="note">Comptes</span><b class="num">'+n+'</b></div><div><span class="note">Invités</span><b class="num">'+an+'</b></div><div><span class="note">Bloqués</span><b class="num">'+(C?C.users.filter(function(u){return u.banned}).length:0)+'</b></div></div>'+
+   '<input type="search" id="cliQ" class="search" placeholder="Chercher un e-mail" value="'+esc(DASH.q)+'" autocomplete="off"><label class="chk"><input type="checkbox" id="cliAnon"'+(DASH.anon?' checked':'')+'> <span>Afficher aussi les invités (sans compte)</span></label>'+(DASH.cliErr?'<div class="note" style="color:var(--down)">'+esc(DASH.cliErr)+'</div>':'')+'</div><div id="cliList">'+cliRows()+'</div>'+
+   '<p class="note">« Offrir » active un abonnement à la prochaine ouverture de l’appli par ce client. « Bloquer » l’empêche de se reconnecter.</p>'}
+document.addEventListener('input',function(e){if(e.target.id==='cliQ'){DASH.q=e.target.value;var l=$('#cliList');if(l)l.innerHTML=cliRows()}});
+document.addEventListener('change',function(e){if(e.target.id==='cliAnon'){DASH.anon=e.target.checked?1:0;var l=$('#cliList');if(l)l.innerHTML=cliRows()}});
+document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('[data-cli]');if(!t)return;var k=t.dataset.cli,uid=t.dataset.u,A=fAcc();
+  if(k==='gift'){DASH.gift=DASH.gift===uid?null:uid;$('#cliList').innerHTML=cliRows();return}
+  if(k==='giftok'){var pl=($('#gP')||{}).value,mo=+(($('#gM')||{}).value)||1;t.disabled=true;A.admin({action:'gift',uid:uid,plan:pl,months:mo}).then(function(){DASH.gift=null;toast('Abonnement offert');$('#cliList').innerHTML=cliRows()}).catch(function(x){t.disabled=false;toast(x.message)});return}
+  if(k==='ban'){var on=t.dataset.on==='1';if(on&&!confirm('Bloquer ce client ? Il ne pourra plus se connecter.'))return;t.disabled=true;
+    A.admin({action:'ban',uid:uid,on:on}).then(function(){DASH.cli.users.forEach(function(u){if(u.id===uid)u.banned=on});toast(on?'Client bloqué':'Client débloqué');$('#cliList').innerHTML=cliRows()}).catch(function(x){t.disabled=false;toast(x.message)})}});
+/* mon espace : mode créateur et vue client */
+function dashCrea(){var asc=lsGet('finly-asclient')==='1';
+  return '<div class="card"><div class="row"><h3>Mode créateur</h3><button class="chip" data-crea="admin" aria-pressed="'+(!!S.admin)+'">'+(S.admin?'Activé':'Désactivé')+'</button></div><div class="note">Pour tester : plus de pause entre les quiz, examens et révisions toujours ouverts.</div></div>'+
+   '<div class="card"><div class="row"><h3>Utiliser l’appli comme un client</h3><button class="chip" data-crea="client" aria-pressed="'+asc+'">'+(asc?'Activé':'Désactivé')+'</button></div><div class="note">Ton espace perso : tu vois l’appli exactement comme tes clients (offre Gratuite, limites, écrans d’abonnement). Ton budget et tes papiers restent les tiens. L’espace créateur reste accessible depuis ton Profil.</div></div>'+
+   '<div class="card"><h3>Ton compte</h3><div class="note">'+esc((ACC.me||{}).email||'')+'</div><button class="btn small ghost" data-cl="sec">Sécurité du compte</button></div>'}
+document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('[data-crea]');if(!t)return;
+  if(t.dataset.crea==='admin'){S.admin=!S.admin;lsSet('finly-admin',S.admin?'1':null);save();render();dashRender();toast(S.admin?'Mode créateur activé':'Mode créateur désactivé');return}
+  if(t.dataset.crea==='client'){var on=lsGet('finly-asclient')!=='1';lsSet('finly-asclient',on?'1':null);ACC.owner=!on;if(on){S.admin=false;lsSet('finly-admin',null)}save();render();dashRender();toast(on?'Tu vois l’appli comme un client':'Accès créateur rétabli')}});
+/* abonnement offert par le créateur */
+function giftCheck(){if(!ACC.db||!ACC.uid)return;ACC.db.doc('redeem/'+ACC.uid).get().then(function(s){var g=s.exists&&(s.data()||{}).gift;if(!g||!(+g.at>(+S.giftAt||0)))return;
+  var pl=g.plan==='budget'?'budget':'premium',base=Math.max(now(),S.plan===pl&&S.planUntil?S.planUntil:0);S.plan=pl;S.planUntil=base+(+g.months||1)*30.44*864e5;S.giftAt=+g.at;S.statDay='';save();statsPublish();render();
+  toast((pl==='budget'?'Finly+':'Pro')+' t’est offert jusqu’au '+new Date(S.planUntil).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}))}).catch(function(){})}
+/* une fois le compte chargé */
+(function(){var n=0,t=setInterval(function(){n++;if(ACC.state==='ok'||ACC.state==='local'||ACC.state==='off'||n>120){clearInterval(t);
+  FOWN=!!ACC.owner;if(FOWN){if(lsGet('finly-asclient')==='1'){ACC.owner=false;S.admin=false}else if(lsGet('finly-admin')==='1')S.admin=true}
+  if(ACC.state==='ok'){giftCheck();gateCheck()}render()}},250)})();
+
