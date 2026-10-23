@@ -37,6 +37,15 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
     window.FinlyCloud.account.logout().then(function(){try{localStorage.removeItem(KEY);localStorage.removeItem('finly-adopt')}catch(er){}location.reload()});return}
   finlyAcctSheet(k)});
 
+/* ---------- Finly : logo + thèmes minimalistes aux couleurs du logo ---------- */
+THEMES.unshift(
+ {id:'finly',name:'Finly',apple:1,dark:1,bg:'#000000',card:'#121016',card2:'#1C1922',sep:'#2E2938',text:'#F7F4FB',sec:'#9C95A8',acc:'#A66BFF',g1:'#F08CFF',g2:'#5B2EFF',on:'#FFFFFF',glow:'transparent',up:'#30D158',down:'#FF453A',ti1:'#F6D9FF',ti2:'#9D6BFF',ti3:'#2A1745'},
+ {id:'finlyclair',name:'Finly clair',apple:1,dark:0,bg:'#F7F5FA',card:'#FFFFFF',card2:'#EFEBF5',sep:'#DCD6E6',text:'#17131F',sec:'#6E6878',acc:'#7B3FF2',g1:'#C04BFF',g2:'#5B2EFF',on:'#FFFFFF',glow:'transparent',up:'#248A3D',down:'#D70015',ti1:'#2A1452',ti2:'#8A5CF5',ti3:'#EDE3FF'}
+);
+if(!S.v5){S.theme='finly';S.v5=1}
+LOGO='<img src="apple-touch-icon.png" alt="" style="width:56px;height:56px;border-radius:14px;display:block">';
+(function(){var b=document.querySelector('.top .brand svg');if(!b)return;var i=document.createElement('img');i.src='apple-touch-icon.png';i.alt='';i.width=26;i.height=26;i.style.cssText='border-radius:7px;display:block';b.parentNode.replaceChild(i,b)})();
+
 /* ---------- start ---------- */
 lastJson=stateSig();applyTheme(S.theme); render();if(TAMPER)setTimeout(function(){toast('Progression modifiée hors de l’app détectée : elle a été remise à zéro')},800); rotatePill(); initAccount();
 setInterval(function(){if(ACC.state==='ok'){statsPublish()}},60000);
