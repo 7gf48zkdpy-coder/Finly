@@ -146,8 +146,9 @@
     login: function (email, password) {
       return client().then(function (sb) {
         return sb.auth.signInWithPassword({ email: email, password: password }).then(function (r) {
-          if (r.error) throw new Error(/invalid/i.test(r.error.message) ? "E-mail ou mot de passe incorrect." : "Connexion impossible, réessaie.");
+          if (r.error) throw new Error(/invalid/i.test(r.error.message) ? "E-mail ou mot de passe incorrect." : /banned/i.test(r.error.message) ? "Ce compte est bloqué." : "Connexion impossible, réessaie.");
           try { localStorage.setItem("finly-adopt", "1"); } catch (e) {}
+          return r.data && r.data.user;
         });
       });
     },
@@ -159,6 +160,95 @@
     password: function (pw) {
       return client().then(function (sb) {
         return sb.auth.updateUser({ password: pw }).then(function (r) { if (r.error) throw new Error("Modification impossible, réessaie."); });
+      });
+    },
+    // Connexion avec Google (le compte invité est relié à Google quand c'est possible, pour garder la progression)
+    google: function () {
+      var back = location.origin + location.pathname;
+      return client().then(function (sb) {
+        try { localStorage.setItem("finly-adopt", "1"); } catch (e) {}
+        return sb.auth.getSession().then(function (r) {
+          var u = r.data && r.data.session && r.data.session.user;
+          var go = function () { return sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: back } }); };
+          var p = u && u.is_anonymous && sb.auth.linkIdentity ? sb.auth.linkIdentity({ provider: "google", options: { redirectTo: back } }).then(function (x) { return x.error ? go() : x; }) : go();
+          return p.then(function (x) { if (x && x.error) throw new Error(/provider is not enabled|Unsupported provider/i.test(x.error.message) ? "La connexion Google n'est pas encore activée." : "Connexion Google impossible, réessaie."); });
+        });
+      });
+    },
+    // Code à usage unique envoyé par e-mail
+    sendCode: function (email, create) {
+      return client().then(function (sb) {
+        return sb.auth.signInWithOtp({ email: email, options: { shouldCreateUser: !!create } }).then(function (r) {
+          if (r.error) throw new Error(/rate|seconds/i.test(r.error.message) ? "Patiente une minute avant de redemander un code." : /signups? not allowed|not found/i.test(r.error.message) ? "Aucun compte avec cet e-mail." : "Envoi du code impossible, réessaie.");
+        });
+      });
+    },
+    verifyCode: function (email, code) {
+      return client().then(function (sb) {
+        return sb.auth.verifyOtp({ email: email, token: String(code).replace(/\s/g, ""), type: "email" }).then(function (r) {
+          if (r.error) throw new Error("Code incorrect ou expiré.");
+          try { localStorage.setItem("finly-adopt", "1"); } catch (e) {}
+          return r.data && r.data.user;
+        });
+      });
+    },
+    // Informations du compte connecté
+    info: function () {
+      return client().then(function (sb) {
+        return sb.auth.getUser().then(function (r) {
+          var u = r.data && r.data.user; if (!u) return null;
+          return sb.auth.mfa.getAuthenticatorAssuranceLevel().then(function (a) {
+            return sb.auth.mfa.listFactors().then(function (f) {
+              var totp = ((f.data && f.data.totp) || []).filter(function (x) { return x.status === "verified"; });
+              return { id: u.id, email: u.email || "", anonymous: !!u.is_anonymous, providers: (u.app_metadata && u.app_metadata.providers) || [],
+                emailCode: !!(u.user_metadata && u.user_metadata.mfa_email), totp: totp.map(function (x) { return x.id; }),
+                aal: a.data ? a.data.currentLevel : "aal1", next: a.data ? a.data.nextLevel : "aal1" };
+            });
+          });
+        });
+      });
+    },
+    // Double sécurité : appli de codes (TOTP)
+    totpStart: function () {
+      return client().then(function (sb) {
+        return sb.auth.mfa.enroll({ factorType: "totp", friendlyName: "Finly " + new Date().toISOString().slice(0, 16) }).then(function (r) {
+          if (r.error) throw new Error("Activation impossible, réessaie.");
+          return { id: r.data.id, qr: r.data.totp.qr_code, secret: r.data.totp.secret, uri: r.data.totp.uri };
+        });
+      });
+    },
+    totpCheck: function (factorId, code) {
+      return client().then(function (sb) {
+        var go = function (id) { return sb.auth.mfa.challengeAndVerify({ factorId: id, code: String(code).replace(/\s/g, "") }).then(function (r) { if (r.error) throw new Error("Code incorrect, réessaie."); }); };
+        if (factorId) return go(factorId);
+        return sb.auth.mfa.listFactors().then(function (f) {
+          var t = ((f.data && f.data.totp) || []).filter(function (x) { return x.status === "verified"; })[0];
+          if (!t) throw new Error("Aucune appli de codes reliée."); return go(t.id);
+        });
+      });
+    },
+    totpRemove: function (factorId) {
+      return client().then(function (sb) {
+        return sb.auth.mfa.unenroll({ factorId: factorId }).then(function (r) { if (r.error) throw new Error("Entre d'abord un code de ton appli pour confirmer."); });
+      });
+    },
+    // Double sécurité : code par e-mail à chaque connexion
+    emailCode: function (on) {
+      return client().then(function (sb) {
+        return sb.auth.updateUser({ data: { mfa_email: !!on } }).then(function (r) { if (r.error) throw new Error("Modification impossible, réessaie."); });
+      });
+    },
+    // Outils du créateur
+    admin: function (body) {
+      return client().then(function (sb) {
+        return sb.functions.invoke("admin-users", { body: body }).then(function (r) {
+          if (r.error) {
+            var ctx = r.error.context;
+            if (ctx && typeof ctx.json === "function") return ctx.json().then(function (j) { throw new Error((j && j.error) || "Erreur, réessaie."); }, function () { throw new Error("Erreur, réessaie."); });
+            throw new Error("Erreur, réessaie.");
+          }
+          return r.data;
+        });
       });
     }
   };
