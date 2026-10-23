@@ -1,0 +1,173 @@
+   '<div class="grp"><a class="lrow" href="'+L.g+'" target="_blank" rel="noopener" data-remdone="'+d.id+'"><span class="dot">G</span><span style="flex:1;min-width:0"><span class="t" style="display:block">Google Agenda</span><span class="s" style="display:block">Android, ou iPhone avec un compte Google</span></span><span class="muted">›</span></a>'+
+   '<a class="lrow" href="'+L.o+'" target="_blank" rel="noopener" data-remdone="'+d.id+'"><span class="dot">O</span><span style="flex:1;min-width:0"><span class="t" style="display:block">Outlook</span><span class="s" style="display:block">Compte Outlook, Hotmail ou Live</span></span><span class="muted">›</span></a>'+
+   '<button class="lrow" data-remcopy="'+d.id+'"><span class="dot">🔔</span><span style="flex:1;min-width:0"><span class="t" style="display:block">Rappels de l’iPhone</span><span class="s" style="display:block">Copie le texte, puis colle-le dans l’app Rappels ou dis-le à Siri</span></span><span class="muted">›</span></button></div>'+
+   '<textarea id="remTxt" readonly rows="4" class="remtxt" aria-label="Texte du rappel">'+esc(L.txt)+'</textarea>'+
+   '<div class="ftip">Dans tous les cas, l’app te prévient aussi ici une semaine avant, puis te demande après la date si c’est réglé.</div>')}
+document.addEventListener('click',function(e){var a=e.target.closest('[data-remdone],[data-remcopy]');if(!a)return;var b=bud(),d=(b.docs||[]).filter(function(x){return x.id===(a.dataset.remdone||a.dataset.remcopy)})[0];if(!d)return;
+  if(a.dataset.remdone){d.remind=1;save();return}
+  var ta=$('#remTxt'),ok=function(){d.remind=1;save();toast('Copié : colle-le dans l’app Rappels')},fb=function(){if(ta){ta.focus();ta.select();try{ta.setSelectionRange(0,ta.value.length)}catch(er){}}toast('Sélectionne le texte ci-dessous et copie-le')};
+  try{navigator.clipboard.writeText(ta?ta.value:'').then(ok,fb)}catch(er){fb()}});
+function bManual(){sheet('<div class="sheet-top"><span class="k">Saisir à la main</span><button class="xbtn" data-close="1" aria-label="Fermer">✕</button></div><h2 class="title-xl">Qu’est-ce que tu veux ajouter ?</h2>'+
+  '<div class="btiles"><button class="btile" data-docnew="1"><span>🧾</span><b>Un papier à payer</b><small>Facture, amende, impôt, mise en demeure</small></button><button class="btile" data-bnew="autres|"><span>🛒</span><b>Une dépense régulière</b><small>Loyer, courses, essence, abonnement</small></button><button class="btile" data-binc="new"><span>💶</span><b>Un revenu</b><small>Salaire, aides, pension</small></button><button class="btile" data-bdebt="new"><span>🏦</span><b>Un crédit</b><small>Prêt auto, conso, immobilier</small></button></div>')}
+document.addEventListener('click',function(e){var t=e.target.closest('[data-docplan],[data-docplansave],[data-docplanstop],[data-docinst],[data-docinstno],[data-docinstundo],[data-docview],[data-docpaid],[data-docno],[data-doclater],[data-docics],[data-docedit],[data-docdel],[data-docundo],[data-docnew],[data-docsave],[data-dock],[data-bman],[data-bgo]');if(!t)return;var d=t.dataset,b=bud(),find=function(id){return (b.docs||[]).filter(function(x){return x.id===id})[0]};
+  if(d.bgo){b.btab=d.bgo;save();closeSheet();if(tab!=='budget')tab='budget';render();window.scrollTo(0,0);return}
+  if(d.bman){bManual();return}
+  if(d.docnew){docEdit(null);return}
+  if(d.docview){docView(d.docview);return}
+  if(d.docplan){docPlanEdit(d.docplan);return}
+  if(d.docplansave){var y=find(d.docplansave);if(!y)return;var T=bnum($('#dfPT').value),N=Math.round(bnum($('#dfPN').value)),A=bnum($('#dfPA').value),F=$('#dfPF').value,PP=Math.max(0,Math.round(bnum($('#dfPP').value)));
+    if(!(T>0)||!(N>=1)||!(A>0)||!F){toast('Indique le total, le nombre d’échéances, le montant et la 1re date');return}
+    y.a=T;y.maj=0;y.late=0;y.snooze='';y.plan={n:N,amt:A,first:F,paid:Math.min(N,PP),who:$('#dfPW').value.trim(),hist:(y.plan&&y.plan.hist)||[]};if(y.plan.paid>=N){y.status='paid';y.paidAt=Date.now()}docSync(b);save();render();docView(y.id);toast('Échéancier enregistré');return}
+  if(d.docplanstop){var z=find(d.docplanstop);if(!z)return;var Z=docPlanInfo(z);if(Z)z.a=Z.rem;delete z.plan;docSync(b);save();render();docView(z.id);toast('Échéancier arrêté : il reste '+eurD(z.a));return}
+  if(d.docinst){var w=find(d.docinst);if(!w||!w.plan)return;w.plan.paid=(+w.plan.paid||0)+1;(w.plan.hist=w.plan.hist||[]).push(Date.now());w.snooze='';var W=docPlanInfo(w);
+    if(W.paid>=W.n||W.rem<=0.005){w.status='paid';w.paidAt=Date.now();docSync(b);save();closeSheet();render();toast('Dernière échéance payée : c’est terminé, bravo !');return}
+    docSync(b);save();render();if($('.sheet'))docView(w.id);toast('Échéance '+W.paid+'/'+W.n+' payée · reste '+eurD(W.rem));return}
+  if(d.docinstundo){var u=find(d.docinstundo);if(!u||!u.plan||!u.plan.paid)return;u.plan.paid--;if(u.plan.hist)u.plan.hist.pop();docSync(b);save();render();docView(u.id);return}
+  if(d.docinstno){var q=find(d.docinstno);if(!q)return;q.snooze=ymdL(today0());save();render();docView(q.id);toast('Appelle vite le créancier pour le prévenir');return}
+  if(d.docedit){docEdit(d.docedit);return}
+  if(d.docics){docRemind(d.docics);return}
+  if(d.dock){document.querySelectorAll('[data-dock]').forEach(function(x){x.setAttribute('aria-checked',String(x===t))});var k=$('#dfK');if(k)k.value=d.dock;var h=$('#dfHint');if(h)h.textContent=d.dock==='amende'?'Une amende de 135 € passe en général à 375 € si elle n’est pas payée dans les 45 jours (le délai exact est écrit sur l’avis).':d.dock==='recouv'?'Une mise en demeure fixe un délai pour payer avant des poursuites : note la date indiquée dans le courrier.':'Le montant et la date figurent en haut de la facture ou du courrier.';return}
+  if(d.docsave){var o=docRead();if(DED&&DED.id){var x=find(DED.id);if(!x)return;if(!(o.a>0)){toast('Indique le montant à payer');return}x.k=o.k;x.l=o.l;x.a=o.a;x.due=o.due;x.maj=o.maj>o.a?o.maj:0;x.late=0;x.snooze='';docSync(b);save();closeSheet();render();toast('Enregistré');return}
+    var nd=docAdd(o);if(nd){DED=null;docSaved(nd)}return}
+  var x=find(d.docpaid||d.docno||d.doclater||d.docdel||d.docundo);if(!x)return;
+  if(d.docpaid){x.status='paid';x.paidAt=Date.now();docSync(b);save();closeSheet();render();toast('Bravo, c’est réglé !');return}
+  if(d.doclater){x.snooze=ymdL(today0());save();render();toast('On t’en reparle demain');return}
+  if(d.docno){x.late=1;if(x.maj>x.a){x.a=x.maj;x.maj=0}docSync(b);save();closeSheet();render();docView(x.id);return}
+  if(d.docdel){b.docs=b.docs.filter(function(y){return y.id!==x.id});docSync(b);save();closeSheet();render();toast('Supprimé');return}
+  if(d.docundo){x.status='due';delete x.paidAt;if(x.plan&&docPlanInfo(x).paid>=x.plan.n)x.plan.paid=x.plan.n-1;docSync(b);save();render();return}});
+document.addEventListener('input',function(e){if(/^dfP[TNA]$/.test(e.target.id)){if(e.target.id!=='dfPA'){var a=$('#dfPA'),T=bnum(($('#dfPT')||{}).value),N=Math.round(bnum(($('#dfPN')||{}).value));if(a&&!a.dataset.touched&&T>0&&N>0)a.value=Math.ceil(T/N*100)/100}else e.target.dataset.touched=1;docPlanCheck()}});
+
+/* ----- scanner un document avec l'IA ----- */
+var SCAN={imgs:[],res:null,busy:0};
+var SCDOC={paie:'Fiche de paie',amende:'Amende',facture:'Facture',impot:'Impôts',credit:'Crédit',loyer:'Loyer',demeure:'Mise en demeure',autre:'Document'};
+function scanShrink(file){return new Promise(function(res){var u=URL.createObjectURL(file),im=new Image();im.onload=function(){var M=2000,w=im.naturalWidth,h=im.naturalHeight,k=Math.min(1,M/Math.max(w,h)),cv=document.createElement('canvas');cv.width=Math.max(1,Math.round(w*k));cv.height=Math.max(1,Math.round(h*k));cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(u);cv.toBlob(function(b){res(b||file)},'image/jpeg',0.85)};im.onerror=function(){URL.revokeObjectURL(u);res(file)};im.src=u})}
+function scanOpen(){SCAN.imgs.forEach(function(x){try{URL.revokeObjectURL(x.url)}catch(e){}});SCAN={imgs:[],res:null,busy:0,err:''};scanRender()}
+function scanRender(){var r=SCAN.res,body;
+  if(r)body=scanForm(r);
+  else body='<div class="note" style="font-size:15px">Facture, amende, mise en demeure, avis d’impôt, fiche de paie, offre de crédit : l’IA lit le montant et la date limite, et l’app te prévient avant l’échéance.</div>'+
+   (SCAN.imgs.length?'<div class="scthumbs">'+SCAN.imgs.map(function(x,i){return '<div class="scth"><img src="'+x.url+'" alt="Page '+(i+1)+'"><button class="xbtn" data-scdel="'+i+'" aria-label="Retirer cette photo">✕</button></div>'}).join('')+'<label class="scth scadd" for="scCam" aria-label="Ajouter une page">＋<small>Page</small></label></div>':
+    '<label class="scbig" for="scCam"><span>📷</span><b>Prendre le papier en photo</b><small>Bien à plat, toute la page visible</small></label><label class="lnk" for="scGal" style="align-self:center;cursor:pointer">ou choisir une photo déjà prise</label>')+
+   '<input type="file" id="scCam" accept="image/*" capture="environment" hidden><input type="file" id="scGal" accept="image/*" multiple hidden>'+
+   (SCAN.err?'<div class="btip t-down"><div>'+esc(SCAN.err)+'</div></div>':'')+
+   (SCAN.imgs.length?'<button class="btn" data-scgo="1"'+(SCAN.busy?' disabled':'')+'>'+(SCAN.busy?'L’IA lit ton papier…':'Lire avec l’IA')+'</button>':'')+
+   qNote('scan')+'<div class="note">Tes photos servent seulement à la lecture, elles ne sont pas enregistrées. Pas le papier sur toi ? <button class="lnk" data-bman="1">Saisis les chiffres à la main</button></div>';
+  sheet('<div class="sheet-top"><span class="k">Scanner un papier</span><button class="xbtn" data-close="1" aria-label="Fermer">✕</button></div><h2 class="title-xl">'+(r?'C’est bien ça ?':'Scanner un papier')+'</h2>'+body)}
+function scanForm(r){var k=r.ajout,b=bud(),sal=k==='revenu'?b.inc.filter(function(i){return /salaire/i.test(i.l)})[0]:null,f;
+  if(k==='papier')f=docFields({k:DOCK.map(function(x){return x[0]}).indexOf(r.type_dette)>=0?r.type_dette:({amende:'amende',demeure:'recouv',impot:'impots',loyer:'loyer'})[r.document]||'autre',l:r.nom,a:r.montant,due:r.date_limite,maj:r.montant_apres});
+  else if(k==='revenu')f=bField('scL','Nom',r.nom||'Salaire net','text')+bField('scA','Montant net par mois (€)',r.montant==null?'':r.montant)+(sal&&!b.demo?'<div class="note">Ça remplacera ton « '+esc(sal.l)+' » actuel ('+eur0(sal.a)+').</div>':'');
+  else if(k==='credit')f='<div class="field"><label for="scK">Type</label>'+bSel('scK',WZCRED.map(function(x){return [x,BDEBT[x][0]]}),WZCRED.indexOf(r.type_dette)>=0?r.type_dette:'conso')+'</div>'+bField('scL','Nom',r.nom||'','text')+'<div class="btxrow">'+bField('scB','Reste à rembourser (€)',r.reste_du==null?'':r.reste_du)+bField('scP','Mensualité (€)',r.mensualite==null?'':r.mensualite)+'</div>'+bField('scR','Taux annuel (%)',r.taux==null?'':r.taux);
+  else f=bField('scL','Nom',r.nom||'','text')+'<div class="btxrow">'+bField('scA','Montant (€)',r.montant==null?'':r.montant)+'<div class="field"><label for="scF">Tous les</label>'+bSel('scF',[['m','mois'],['q','trimestres'],['y','ans'],['w','semaines']],BPER[r.frequence]?r.frequence:'m')+'</div></div><div class="field"><label for="scC">Catégorie</label>'+bSel('scC',Object.keys(BCAT).map(function(x){return [x,BCAT[x].n]}),BCAT[r.categorie]?r.categorie:'autres')+'</div>';
+  return '<div class="card scsum"><span class="badge acc">'+esc(SCDOC[r.document]||'Document')+'</span><div style="font-size:16px;line-height:1.45">'+esc(r.resume||'')+'</div>'+(r.a_savoir?'<div class="note">'+esc(r.a_savoir)+'</div>':'')+'</div>'+
+   '<div class="field"><label>Je l’ajoute comme</label><div class="seg seg4" role="group" aria-label="Ajouter comme">'+[['papier','À payer'],['depense','Dépense'],['revenu','Revenu'],['credit','Crédit']].map(function(x){return '<button data-sckind="'+x[0]+'" aria-pressed="'+(k===x[0])+'">'+x[1]+'</button>'}).join('')+'</div></div>'+f+
+   '<button class="btn" data-scsave="1">'+(k==='papier'?'Ajouter à mes papiers':k==='revenu'?(sal?'Mettre à jour mon salaire':'Ajouter ce revenu'):k==='credit'?'Ajouter ce crédit':'Ajouter à mes dépenses')+'</button><p class="note">L’IA peut se tromper : compare avec ton papier avant d’ajouter. <button class="lnk" data-scagain="1">Scanner autre chose</button></p>'}
+function scanReadForm(){var r=SCAN.res,v=function(i){var el=document.getElementById(i);return el?el.value:null};if(!r)return;
+  if(v('dfK')!=null){var o=docRead();r.type_dette=o.k;r.nom=v('dfL')||r.nom;r.montant=o.a;r.date_limite=o.due;r.montant_apres=o.maj}
+  if(v('scL')!=null)r.nom=v('scL');if(v('scA')!=null)r.montant=bnum(v('scA'));if(v('scF')!=null)r.frequence=v('scF');if(v('scC')!=null)r.categorie=v('scC');
+  if(v('scK')!=null)r.type_dette=v('scK');if(v('scB')!=null)r.reste_du=bnum(v('scB'));if(v('scR')!=null)r.taux=bnum(v('scR'));if(v('scP')!=null)r.mensualite=bnum(v('scP'))}
+function scanAnalyse(){if(SCAN.busy||!SCAN.imgs.length)return;if(!qLeft('scan')){qWall('scan');return}SCAN.busy=1;SCAN.err='';scanRender();
+  var fail=function(m){SCAN.busy=0;SCAN.err=m;scanRender()};
+  samplePromise.then(function(sample){if(!sample){fail('La lecture par l’IA n’est pas disponible ici. Tu peux saisir les chiffres à la main.');return}
+    return sample.limits().catch(function(){return null}).then(function(L){if(!L||!L.images){fail('L’envoi de photos à l’IA n’est pas disponible sur cet écran. Tu peux saisir les chiffres à la main.');return}
+      var imgs=SCAN.imgs.slice(0,L.images.maxCount||4).map(function(x){return x.blob});
+      var P='Tu lis un papier administratif ou financier français photographié par l’utilisateur d’une app de budget (images jointes, plusieurs pages possibles). Nous sommes le '+ymdL(today0())+'. Extrais seulement ce qui sert à son budget. Réponds avec SEULEMENT un objet JSON de cette forme :\n'+
+       '{"document":"paie|amende|facture|impot|credit|loyer|demeure|autre","lisible":true,"resume":"une phrase simple : de quoi il s’agit, le montant et la date limite écrite en toutes lettres (ex. 19 novembre)","ajout":"papier|depense|revenu|credit","nom":"nom court, ex. Amende radar, Facture EDF, Mise en demeure Free, Salaire net","montant":123.45,"date_limite":"AAAA-MM-JJ ou null","montant_apres":null,"frequence":"m|q|y|w","categorie":"'+Object.keys(BCAT).join('|')+'","type_dette":"'+BDK.join('|')+'","reste_du":null,"mensualite":null,"taux":null,"a_savoir":"1 phrase utile lue sur le papier (possibilité de payer en plusieurs fois, contestation, minoration), ou null","echeances":null,"montant_echeance":null,"premiere_echeance":null}\n'+
+       'Règles. "papier" = une somme ponctuelle à payer avant une date : amende, mise en demeure, relance, facture impayée, facture de régularisation, avis d’impôt avec un solde à payer, avis de taxe foncière, facture d’hôpital. montant = ce qu’il faut payer maintenant ; date_limite = la date limite de paiement écrite ; montant_apres = le montant annoncé en cas de retard (amende majorée, pénalités), sinon null. Amende : type_dette "amende" ; si l’avis indique un montant minoré, prends le montant forfaitaire comme montant et donne la date limite correspondante ; si seule la date d’envoi figure, date_limite = date d’envoi + 45 jours. Mise en demeure ou lettre de recouvrement : type_dette "recouv". Énergie, eau : "energie" ; téléphone, internet : "telecom" ; impôts et taxe foncière : "impots" ; loyer : "loyer" ; santé : "sante". "depense" = une charge qui revient (facture mensuelle prélevée normalement, quittance de loyer, échéancier de prélèvements) : montant ramené à la période indiquée (facture de 2 mois : montant ÷ 2, frequence "m"). "revenu" = fiche de paie : montant = net payé versé sur le compte, par mois. "credit" = offre, tableau d’amortissement ou relevé de crédit : type_dette parmi conso, revolving, auto, immo, etudiant, reste_du, mensualite, taux (TAEG en %). Si le papier est un accord d’échéancier ou un plan de paiement (Trésor public, recouvrement, fournisseur) : ajout "papier", montant = total restant dû, echeances = nombre d’échéances, montant_echeance = montant de chaque échéance, premiere_echeance = date de la 1re échéance (AAAA-MM-JJ). Sinon ces trois champs restent null. Montants en nombres (point décimal, sans symbole). N’invente rien : null si absent ou illisible ; "lisible": false si ce n’est pas un document financier lisible. Ne recopie aucune donnée personnelle (nom, adresse, numéro de sécurité sociale, IBAN, références de dossier).';
+      return sample.json(P,{images:imgs,cache:false}).then(function(r){SCAN.busy=0;
+        if(!r||typeof r!=='object'||r.lisible===false){fail('Le papier n’a pas pu être lu. Reprends la photo bien à plat, avec de la lumière, sans reflet, en cadrant toute la page.');return}
+        if(['papier','depense','revenu','credit'].indexOf(r.ajout)<0)r.ajout='papier';['montant','reste_du','mensualite','taux','montant_apres'].forEach(function(k){if(r[k]!=null&&isFinite(+r[k]))r[k]=+r[k];else r[k]=null});
+        r.nom=String(r.nom||SCDOC[r.document]||'Document').slice(0,60);r.resume=String(r.resume||'').slice(0,240);r.a_savoir=r.a_savoir&&r.a_savoir!=='null'?String(r.a_savoir).slice(0,300):'';
+        r.date_limite=/^\d{4}-\d{2}-\d{2}$/.test(String(r.date_limite||''))?r.date_limite:'';
+        SCAN.res=r;qUse('scan');scanRender()})}).catch(function(e){var c=e&&e.code;fail(c==='rate_limited'?'L’IA est très sollicitée : réessaie dans un moment.':c==='not_granted'?'Tu n’as pas autorisé l’app à utiliser l’IA. Tu peux saisir les chiffres à la main.':c==='image_rejected'?'Cette image n’est pas acceptée : utilise une photo JPEG ou PNG.':'La lecture a échoué. Réessaie avec une photo plus nette.')})})}
+function scanDone(){SCAN.imgs.forEach(function(x){try{URL.revokeObjectURL(x.url)}catch(e){}});SCAN={imgs:[],res:null,busy:0}}
+function scanSave(){scanReadForm();var r=SCAN.res;if(!r)return;
+  if(r.ajout==='papier'){var o=docRead();var d=docAdd(o,r.a_savoir);if(!d)return;var en=Math.round(+r.echeances||0),ea=+r.montant_echeance||0,ef=/^\d{4}-\d{2}-\d{2}$/.test(String(r.premiere_echeance||''))?r.premiere_echeance:'';
+    if(en>=2&&ea>0&&ef){d.plan={n:en,amt:ea,first:ef,paid:0,who:'',hist:[]};d.maj=0;docSync(bud());save();scanDone();render();docView(d.id);toast('Échéancier enregistré');return}
+    scanDone();docSaved(d);return}
+  var b=docFreshBud(),nom=String(r.nom||'').trim();
+  if(r.ajout==='revenu'){if(!(r.montant>0)){toast('Indique le montant');return}var sal=b.inc.filter(function(i){return /salaire/i.test(i.l)})[0];if(sal&&/salaire|paie/i.test(nom+' '+r.document))sal.a=Math.round(r.montant);else b.inc.push({id:bid(),l:nom||'Revenu',a:Math.round(r.montant)})}
+  else if(r.ajout==='credit'){if(!(r.reste_du>0)){toast('Indique le reste à rembourser');return}var k=WZCRED.indexOf(r.type_dette)>=0?r.type_dette:'conso';b.debts.push({id:bid(),k:k,l:nom||BDEBT[k][0],bal:r.reste_du,rate:r.taux||BDEBT[k][1],pay:r.mensualite||0})}
+  else{if(!(r.montant>0)){toast('Indique le montant');return}var c=BCAT[r.categorie]?r.categorie:'autres';b.exp.push({id:bid(),c:c,l:nom||BCAT[c].n,a:r.montant,f:BPER[r.frequence]?r.frequence:'m',n:1})}
+  b.demo=0;scanDone();closeSheet();tab='budget';b.btab='home';save();render();toast(r.ajout==='revenu'?'Revenu mis à jour':r.ajout==='credit'?'Crédit ajouté':'Dépense ajoutée')}
+document.addEventListener('change',function(e){var id=e.target.id;if((id==='scCam'||id==='scGal')&&e.target.files&&e.target.files.length){var fs=[].slice.call(e.target.files,0,Math.max(0,6-SCAN.imgs.length));e.target.value='';
+  Promise.all(fs.map(scanShrink)).then(function(bl){bl.forEach(function(x){SCAN.imgs.push({blob:x,url:URL.createObjectURL(x)})});SCAN.err='';scanRender()})}});
+document.addEventListener('click',function(e){var t=e.target.closest('[data-scan],[data-scgo],[data-scdel],[data-sckind],[data-scsave],[data-scagain]');if(!t)return;var d=t.dataset;
+  if(d.scan){scanOpen();return}
+  if(d.scgo){scanAnalyse();return}
+  if(d.scdel!=null){var x=SCAN.imgs.splice(+d.scdel,1)[0];if(x)try{URL.revokeObjectURL(x.url)}catch(er){}scanRender();return}
+  if(d.sckind){scanReadForm();SCAN.res.ajout=d.sckind;scanRender();return}
+  if(d.scsave){scanSave();return}
+  if(d.scagain){scanOpen();return}});
+
+/* ----- écran ----- */
+function bStack(c){var tot=Math.max(c.inc,c.need+c.want+c.dpay),parts=[['Essentiel',c.need,'var(--g2)'],['Envies',c.want,'var(--warn)'],['Crédits',c.dpay,'var(--down)'],[c.left>=0?'Reste':'Manque',Math.abs(c.left),c.left>=0?'var(--acc)':'var(--down)']];
+  return '<div class="bstack" role="img" aria-label="Répartition des revenus">'+parts.map(function(p){return p[1]>0?'<i style="flex:'+p[1]+';background:'+p[2]+(p[0]==='Manque'?';opacity:.45':'')+'"></i>':''}).join('')+'</div>'+
+   '<div class="blegend">'+parts.map(function(p){return '<span><i style="background:'+p[2]+'"></i>'+p[0]+' <b class="num">'+eur0(p[1])+'</b></span>'}).join('')+'</div>'}
+function b5030(c){if(!c.inc)return '';var rows=[['Besoins essentiels','dont crédits',c.need+c.dpay,50,'var(--g2)'],['Envies','',c.want,30,'var(--warn)'],['Épargne et projets','',Math.max(0,c.left),20,'var(--acc)']];
+  return '<div class="card"><div class="row"><h3>La règle 50 / 30 / 20</h3><button class="lnk" data-lesson="m01l4">La leçon</button></div><div class="note">Un repère simple : la moitié pour l’essentiel, 30 % pour les envies, 20 % pour l’épargne.</div>'+
+   rows.map(function(r){var p=r[2]/c.inc*100,ok=r[3]===20?p>=r[3]:p<=r[3]+2;return '<div class="b53"><div class="row"><span>'+r[0]+'</span><span class="num"><b>'+nf0.format(p)+' %</b> <span class="muted">/ '+r[3]+' %</span></span></div><div class="b53bar"><i style="width:'+Math.min(100,p)+'%;background:'+r[4]+'"></i><s style="left:'+r[3]+'%"></s></div>'+(ok?'':'<div class="note" style="color:var(--warn)">'+(r[3]===20?'Il manque '+eur0((0.2-p/100)*c.inc)+' par mois pour atteindre 20 %.':'Au-dessus du repère de '+eur0((p-r[3])/100*c.inc)+' par mois.')+'</div>')+'</div>'}).join('')+'</div>'}
+function bTabs(){var b=bud(),T=[['plan','Mon plan'],['depenses','Dépenses'],['suivi','Ce mois-ci'],['dettes','Dettes'],['objectifs','Objectifs']];
+  return '<div class="btabs" role="tablist">'+T.map(function(t){return '<button role="tab" data-btab="'+t[0]+'" aria-selected="'+(b.btab===t[0])+'">'+t[1]+'</button>'}).join('')+'</div>'}
+var FX={dep:'budget'};
+function fxPage(t,sub,body){return '<div class="screen budget"><div class="hdr fxh"><div><div class="fxk">'+t+'</div><h1>'+sub+'</h1></div></div><div id="bbody" class="bbody">'+body+'</div></div>'}
+function fxDepenses(c){return fxPage('Budget','Ce qui rentre, ce qui sort','<div class="seg" role="group" aria-label="Vue"><button data-fxdep="budget" aria-pressed="'+(FX.dep!=='suivi')+'">Mon budget</button><button data-fxdep="suivi" aria-pressed="'+(FX.dep==='suivi')+'">Ce mois-ci</button></div>'+(FX.dep==='suivi'?bSuivi(c):bDepenses(c)))}
+function fxEpargne(c){return fxPage('Épargne','Mettre de côté, puis investir',fxInvest(c)+'<div class="sec-h"><h2>Mes objectifs</h2></div>'+bObjectifs(c))}
+var INVS={
+ livret:['Livret A / LDDS','sur','Sans risque, disponible à tout moment, sans impôt. Rendement faible.',0.015,0,1,['livret']],
+ fonds:['Fonds euros','sur','Capital garanti par l’assureur (hors frais), rendement modeste mais régulier.',0.025,0.003,1,['av']],
+ apport:['Apport immobilier','immo','Mettre de côté pour acheter un logement (à vivre ou à louer). Les banques demandent souvent environ 10 % du prix.',0.015,0,1,['livret']],
+ scpi:['Immobilier (SCPI)','immo','« Pierre-papier » : des parts d’immeubles (bureaux, commerces, santé) qui versent des loyers. Frais d’entrée élevés : à garder 8 ans et plus.',0.04,0.015,2,['av','direct','per']],
+ monde:['ETF Monde','etf','≈ 1 500 grandes entreprises de 23 pays riches. Le placement long terme le plus diversifié.',0.06,0.02,3,['cto','av','per']],
+ sp500:['ETF S&P 500','etf','Les 500 plus grandes entreprises américaines (Apple, Microsoft, Nvidia…). Un seul pays, en dollars.',0.07,0.025,3,['cto','av','per']],
+ europe:['ETF Europe','etf','600 entreprises européennes (LVMH, Nestlé, ASML…). En euros, croissance plus lente.',0.05,0.025,3,['cto','av']],
+ nasdaq:['ETF Nasdaq 100','etf','Les grosses valeurs de la tech américaine. Peut chuter de 30 à 50 % certaines années.',0.08,0.035,4,['cto','av']],
+ emerg:['ETF Émergents','etf','Chine, Inde, Taïwan, Brésil… Potentiel de croissance, mais très secoué.',0.055,0.035,4,['cto','av']],
+ actions:['Actions en direct','act','Acheter toi-même des entreprises (Apple, TotalEnergies, LVMH…). Peu diversifié : une seule entreprise peut perdre 50 % ou plus. Garde-les en petite part.',0.065,0.05,5,['cto']],
+ theme:['ETF thématiques','etf','Un ETF par domaine d’avenir (IA, santé, énergie…) : des dizaines d’entreprises d’un même secteur. Plus risqué qu’un ETF Monde, moins qu’une seule action.',0.065,0.04,4,['cto','av']],
+ immocote:['Immobilier en Bourse','immo','Des sociétés foncières cotées (et leurs ETF) qui possèdent des immeubles et reversent une partie des loyers. Se revend en un clic, mais suit les hauts et bas de la Bourse.',0.05,0.03,3,['cto','av']]};
+var INVFAM=[['sur','Sans risque'],['immo','Immobilier'],['etf','ETF (des centaines d’entreprises d’un coup)'],['act','Actions']];
+var INVE={cto:['Compte-titres','Le compte de base chez n’importe quel courtier ou appli de Bourse : tous les ETF et toutes les actions, gains imposés quand tu vends'],
+ av:['Assurance-vie','Fiscalité allégée après 8 ans, argent disponible, utile pour transmettre'],per:['PER','Réduit ton impôt maintenant, mais bloqué jusqu’à la retraite (sauf achat de ta résidence principale)'],
+ livret:['Livret','Livret A, LDDS ou livret jeune : sans risque et sans impôt'],direct:['En direct','Parts achetées auprès de la société de gestion']};
+var INVP={prudent:['Prudent','Priorité à la sécurité',3,0.5,'au moins 3 placements, dont la moitié sans risque'],equi:['Équilibré','Un peu de sécurité, beaucoup de long terme',3,0.2,'au moins 3 placements, dont 20 % sans risque'],dyn:['Dynamique','Croissance sur 10 ans et plus',2,0,'au moins 2 placements']};
+var INVPRE={prudent:[['fonds',45],['livret',15],['monde',40]],equi:[['monde',50],['fonds',25],['scpi',25]],dyn:[['sp500',50],['monde',35],['nasdaq',15]]};
+function invL(k,w){return {k:k,w:w,e:INVS[k][6][0]}}
+function invS(){var c=bCalc();if(!S.inv){var p=bPlan(c).filter(function(x){return x.k==='investir'})[0];S.inv={m:p?p.a:Math.max(0,Math.round(Math.max(0,c.left)*0.3/10)*10)||50,y:20,p:'equi'}}
+  var I=S.inv;if(!INVP[I.p])I.p='equi';if(!Array.isArray(I.lines))I.lines=INVPRE[I.p].map(function(x){return invL(x[0],x[1])});I.lines=I.lines.filter(function(l){return INVS[l.k]});I.lines.forEach(function(l){if(INVS[l.k][6].indexOf(l.e)<0)l.e=INVS[l.k][6][0]});return I}
+function invW(I){var t=I.lines.reduce(function(a,l){return a+(+l.w||0)},0)||1;return I.lines.map(function(l){return (+l.w||0)/t})}
+function invFV(m,r,y){var t=r/12,n=y*12;return t?m*(Math.pow(1+t,n)-1)/t:m*n}
+function invChk(I){var P=INVP[I.p],ws=invW(I),n=I.lines.filter(function(l){return (+l.w||0)>0}).length,safe=0,r5=0,big=0,out=[];
+  I.lines.forEach(function(l,i){var S2=INVS[l.k];if(S2[5]<=1)safe+=ws[i];if(S2[5]>=4)r5+=ws[i];if(ws[i]>big)big=ws[i]});
+  if(n<P[2])out.push(['down','Ajoute encore '+(P[2]-n)+' placement'+(P[2]-n>1?'s':'')+' : un profil '+P[0].toLowerCase()+' se répartit sur '+P[4]+'.']);
+  if(safe<P[3]-0.001)out.push(['warn','Pour un profil '+P[0].toLowerCase()+', garde au moins '+Math.round(P[3]*100)+' % sans risque (livret, fonds euros, apport). Tu en as '+Math.round(safe*100)+' %.']);
+  if(I.p==='prudent'&&r5>0.1)out.push(['warn','Les placements très risqués (tech, émergents, actions en direct) dépassent 10 % : c’est beaucoup pour un profil prudent.']);
+  I.lines.forEach(function(l,i){if(l.k==='actions'&&ws[i]>0.2)out.push(['warn','Les actions en direct font '+Math.round(ws[i]*100)+' % du plan : au-delà de 10 à 20 %, une seule entreprise peut faire beaucoup de dégâts.'])});
+  if(n>=2&&big>0.8)out.push(['warn','Un seul placement fait plus de 80 % du plan : ce n’est pas vraiment diversifié.']);
+  if(I.y<5&&r5+0.0001>0&&ws.some(function(w,i){return INVS[I.lines[i].k][5]>=3&&w>0.3}))out.push(['warn','Sur moins de 5 ans, la bourse peut être en baisse au moment où tu as besoin de l’argent.']);
+  return {ok:n>=P[2],msgs:out}}
+function invRate(I){var ws=invW(I),r=0,v=0;I.lines.forEach(function(l,i){r+=ws[i]*INVS[l.k][3];v+=ws[i]*INVS[l.k][4]});return [r,0.004+v]}
+function invRes(){var I=invS(),rr=invRate(I),r=rr[0],bd=rr[1],fv=invFV(I.m,r,I.y),lo=invFV(I.m,Math.max(0,r-bd),I.y),hi=invFV(I.m,r+bd,I.y),put=I.m*12*I.y;
+  var W=340,H=150,L=8,R=8,T=10,B=22,pts=function(q){var a=[];for(var k=0;k<=I.y;k++)a.push([L+(W-L-R)*k/I.y,invFV(I.m,q,k)]);return a},mx=Math.max(hi,1),Y=function(v){return T+(H-T-B)*(1-v/mx)};
+  var line=function(q){return pts(q).map(function(p){return p[0].toFixed(1)+','+Y(p[1]).toFixed(1)}).join(' ')},pa=pts(r+bd),pb=pts(Math.max(0,r-bd)).reverse();
+  return '<div class="invbig"><span class="note">Dans '+I.y+' ans, environ</span><b class="num">'+eur0(fv)+'</b><span class="note">dont <b>'+eur0(put)+'</b> versés et <b style="color:var(--up)">'+eur0(fv-put)+'</b> de gains · entre '+eur0(lo)+' et '+eur0(hi)+' selon les marchés</span></div>'+
+   '<svg viewBox="0 0 '+W+' '+H+'" class="invchart" role="img" aria-label="Projection de ton épargne"><polygon points="'+pa.concat(pb).map(function(p){return p[0].toFixed(1)+','+Y(p[1]).toFixed(1)}).join(' ')+'" style="fill:color-mix(in srgb,var(--acc) 18%,transparent)"/><polyline points="'+line(0)+'" fill="none" style="stroke:var(--sec)" stroke-width="1.6" stroke-dasharray="4 4"/><polyline points="'+line(r)+'" fill="none" style="stroke:var(--acc)" stroke-width="2.6" stroke-linecap="round"/><text x="'+L+'" y="'+(H-6)+'" class="ft">Aujourd’hui</text><text x="'+(W-R)+'" y="'+(H-6)+'" text-anchor="end" class="ft">Dans '+I.y+' ans</text></svg>'+
+   '<div class="invlg"><span><i style="background:var(--acc)"></i>Scénario central ('+nf1.format(r*100)+' % par an)</span><span><i style="background:var(--sec)"></i>Argent versé</span></div>'}
+function invRisk(n){var o='';for(var i=1;i<=5;i++)o+='<i class="'+(i<=n?'on':'')+'"></i>';return '<span class="rdots" title="Risque '+n+' sur 5" aria-label="Risque '+n+' sur 5">'+o+'</span>'}
+function invLines(I){var ws=invW(I);return I.lines.map(function(l,i){var S2=INVS[l.k];return '<div class="invln"><div class="row"><b>'+S2[0]+'</b>'+invRisk(S2[5])+'<button class="xbtn" data-invrm="'+i+'" aria-label="Retirer '+esc(S2[0])+'">✕</button></div>'+
+   '<div class="invw"><input type="range" min="0" max="100" step="5" value="'+(+l.w||0)+'" data-invw="'+i+'" aria-label="Part de '+esc(S2[0])+'"><span class="num" data-invpc="'+i+'"><b>'+eur0(I.m*ws[i])+'</b>/mois · '+Math.round(ws[i]*100)+' %</span></div>'+
+   (S2[6].length>1?'<div class="invenvs" role="group" aria-label="Où le placer">'+S2[6].map(function(e){return '<button data-inve="'+i+'|'+e+'" aria-pressed="'+(l.e===e)+'">'+INVE[e][0]+'</button>'}).join('')+'</div>':'<div class="invenvs one"><span>'+INVE[S2[6][0]][0]+'</span></div>')+
+   '<div class="note">'+S2[2]+'</div></div>'}).join('')}
+function invAdd(I){var have={};I.lines.forEach(function(l){have[l.k]=1});return INVFAM.map(function(f){var ks=Object.keys(INVS).filter(function(k){return INVS[k][1]===f[0]});return '<div class="fxchipg"><span class="fxchipk">'+f[1]+'</span><div class="chips">'+ks.map(function(k){return '<button class="chip" data-invadd="'+k+'"'+(have[k]?' disabled aria-disabled="true"':'')+'>'+(have[k]?'✓ ':'+ ')+INVS[k][0]+'</button>'}).join('')+'</div></div>'}).join('')}
+function invWarn(I){var ch=invChk(I);return ch.msgs.map(function(m){return '<div class="btip t-'+m[0]+'"><div>'+m[1]+'</div></div>'}).join('')}
+function invUpd(){var I=invS(),ws=invW(I);I.lines.forEach(function(l,i){var el=document.querySelector('[data-invpc="'+i+'"]');if(el)el.innerHTML='<b>'+eur0(I.m*ws[i])+'</b>/mois · '+Math.round(ws[i]*100)+' %'});var r=$('#invRes');if(r)r.innerHTML=invRes();var w=$('#invWarn');if(w)w.innerHTML=invWarn(I);var sv=$('[data-invsave]');if(sv)sv.disabled=!invChk(I).ok;clearTimeout(window._invt);window._invt=setTimeout(save,400)}
+/* questionnaire de profil */
+var INVQ=[
+ ['y','Dans combien de temps pourrais-tu avoir besoin de cet argent ?',[['Moins de 3 ans',0],['3 à 8 ans',1],['8 à 15 ans',2],['Plus de 15 ans',3]]],
+ ['drop','Ton placement perd 20 % en quelques mois. Tu fais quoi ?',[['Je vends tout pour arrêter les pertes',0],['J’attends, mais je stresse',1],['Je ne touche à rien, ça remontera',2],['J’en rachète, c’est moins cher',3]]],
+ ['goal','Ton objectif principal ?',[['Protéger mon argent',0],['Acheter un logement ou financer un projet',1],['Faire grossir mon argent sur le long terme',2],['Viser le maximum, quitte à prendre des risques',3]]],
+ ['exp','Ton expérience ?',[['Je n’ai jamais investi',0],['Livret, assurance-vie',1],['J’ai déjà acheté des ETF ou des actions',2],['J’investis régulièrement',3]]],
+ ['safe','As-tu une épargne de secours (3 mois de dépenses) ?',[['Non',0],['En partie',1],['Oui',2]]],
+ ['like','Qu’est-ce qui t’intéresse ? (plusieurs choix possibles)',[['ETF Monde','monde'],['S&P 500','sp500'],['Tech (Nasdaq)','nasdaq'],['Actions d’entreprises','actions'],['Immobilier','immo'],['Sans risque','sur']],1],
+ ['style','Comment veux-tu investir ?',[['Simple : des ETF, et je n’y pense plus',0],['Une base d’ETF + quelques entreprises auxquelles je crois',1],['Surtout choisir moi-même mes entreprises',2]]],
+ ['time','Combien de temps veux-tu y passer chaque mois ?',[['Moins de 30 minutes',0],['1 à 2 heures',1],['Plusieurs heures : j’aime analyser',2]]],
+ ['themes','En quels domaines crois-tu pour l’avenir ? (plusieurs choix)',[['IA et puces électroniques','ia'],['Logiciels et cloud','soft'],['Énergie et transition','energie'],['Santé et biotech','sante'],['Luxe et consommation','luxe'],['Défense et industrie','defense'],['Immobilier','immo2'],['Aucun en particulier','none']],2],
+ ['focus','Tu préfères…',[['Être présent un peu partout',0],['Me concentrer sur quelques domaines que je connais',1],['Miser fort sur 1 ou 2 domaines auxquels je crois',2]]],
