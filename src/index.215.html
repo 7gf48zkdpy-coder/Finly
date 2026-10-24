@@ -1,0 +1,10 @@
+/* ---------- correctif : le plan d'investissement reste synchronisé avec l'objectif enregistré ---------- */
+function invGoal(){var b=bud();return (b.goals||[]).filter(function(x){return x.t==='investir'})[0]||null}
+function invS(){var c=bCalc(),g0=invGoal(),Y=[5,10,20,30];
+  if(!S.inv&&g0&&+g0.monthly>0)S.inv={m:+g0.monthly,y:Y.indexOf(+g0.years)>=0?+g0.years:20,p:'equi'};
+  if(S.inv&&!(+S.inv.m>0)&&g0&&+g0.monthly>0){S.inv.m=+g0.monthly;if(Y.indexOf(+g0.years)>=0)S.inv.y=+g0.years}
+  if(!S.inv){var p=bPlan(c).filter(function(x){return x.k==='investir'})[0];S.inv={m:p?p.a:Math.max(0,Math.round(Math.max(0,c.left)*0.3/10)*10)||50,y:20,p:'equi'}}
+  var I=S.inv;if(!INVP[I.p])I.p='equi';if(!Array.isArray(I.lines))I.lines=INVPRE[I.p].map(function(x){return invL(x[0],x[1])});I.lines=I.lines.filter(function(l){return INVS[l.k]});I.lines.forEach(function(l){if(INVS[l.k][6].indexOf(l.e)<0)l.e=INVS[l.k][6][0]});return I}
+document.addEventListener('input',function(e){if(!e.target||e.target.id!=='invM')return;var g=invGoal();if(g&&S.inv)g.monthly=+S.inv.m});
+document.addEventListener('change',function(e){if(e.target&&e.target.id==='invM')save()});
+document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('[data-invy]');if(!t||!S.inv)return;var g=invGoal();if(g){g.years=S.inv.y;save()}});
