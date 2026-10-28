@@ -6,3 +6,5 @@
   Cache-Control: no-cache
 /cloud.js
   Cache-Control: no-cache
+/acces.js
+  Cache-Control: no-cache
